@@ -23,7 +23,7 @@ angular.module($APP.name, [
   'ionic',
   'ion-datetime-picker',
   'indexedDB',
-  'ngFileSaver',
+  'ngCordova',
 ]);
 angular.module($APP.name).run(function ($rootScope) {
 });
