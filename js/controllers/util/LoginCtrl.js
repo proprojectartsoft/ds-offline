@@ -16,24 +16,21 @@ angular.module($APP.name).controller('LoginCtrl', [
         $scope.login = function() {
             if ($scope.user.username && $scope.user.password) {
                 AuthService.login($scope.user).then(function(result) {
-                  if (result.status) {
-                    //  SyncService.sync(); if no connection, do nor synchronize
-                    } else {
-                      if (result) {
+                    if (result.status) {
                         SyncService.sync();
-                        localStorage.setObject('ds.user', {
-                            role: result.role.id,
-                            name: result.username
-                        });
-                        if ($scope.user.remember) {
-                            localStorage.setObject('dsremember', $scope.user);
-                        } else {
-                            localStorage.removeItem('dsremember');
+                    } else {
+                        if (result) {
+                            SyncService.sync();
+                            localStorage.setObject('ds.user', {
+                                role: result.role.id,
+                                name: result.username
+                            });
+                            if ($scope.user.remember) {
+                                localStorage.setObject('dsremember', $scope.user);
+                            } else {
+                                localStorage.removeItem('dsremember');
+                            }
                         }
-                      } else {
-                        //sth
-                      }
-                      //  $state.go('app.projects');
                     }
                 })
             }

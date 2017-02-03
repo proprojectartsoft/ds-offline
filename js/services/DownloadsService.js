@@ -3,8 +3,8 @@ angular.module($APP.name).factory('DownloadsService', [
     '$rootScope',
     'Blob',
     'FileSaver',
-    '$ionicPlatform',
-    function($http, $rootScope, FileSaver, $ionicPlatform) {
+  //  '$ionicPlatform',
+    function($http, $rootScope, FileSaver) {
         return {
             downloadPdf: function(base64String) {
                 return $http.get($APP.server + '/pub/drawings/' + base64String, {
@@ -49,41 +49,6 @@ angular.module($APP.name).factory('DownloadsService', [
                               );
                           }
                       })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-                      //   var filename,
-                      //       octetStreamMime = "application/octet-stream",
-                      //       contentType;
-                       //
-                      //   //  headers = headers();
-                       //
-                      //   if (!filename) {
-                      //       filename = base64String || 'invoice.pdf';
-                      //   }
-                       //
-                      //   contentType = 'application/pdf' || octetStreamMime;
-                       //
-                      //   var blob = new Blob([data], {
-                      //       type: contentType
-                      //   });
-                      //  saveAs(blob, filename);
                     }).error(function(response) {
                         console.log(response);
                     });

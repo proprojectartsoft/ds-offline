@@ -122,7 +122,22 @@ angular.module($APP.name).factory('SyncService', [
                             })
                         })
                     } else {
-                        console.log('OFFLINE');
+                        var savedCredentials = localStorage.getObject('dsremember');
+                        var offlinePopup = $ionicPopup.alert({
+                            title: "You are offline",
+                            template: "<center>You cannot sync your data when offline</center>",
+                            content: "",
+                            buttons: [{
+                                text: 'Ok',
+                                type: 'button-positive',
+                                onTap: function(e) {
+                                    offlinePopup.close();
+                                }
+                            }]
+                        });
+                        // if (savedCredentials) {
+                        //     $state.go('login');
+                        // }
                     }
                     return deferred.promise;
                 })
