@@ -23,17 +23,10 @@ Storage.prototype.getObject = function(key) {
 }
 
 angular.module($APP.name, [
-<<<<<<< HEAD
     'ionic',
     'ion-datetime-picker',
     'indexedDB',
     'ngCordova',
-=======
-  'ionic',
-  'ion-datetime-picker',
-  'indexedDB',
-  'ngCordova',
->>>>>>> origin/master
 ]);
 angular.module($APP.name).run(function($rootScope) {});
 angular.module($APP.name).config([
