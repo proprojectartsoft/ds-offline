@@ -81,7 +81,7 @@ angular.module($APP.name).factory('DownloadsService', [
                     }).error(function(response) {
                         console.log(response);
                     });
-            };
+            }
         }
     };
 ]);
