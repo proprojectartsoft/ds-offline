@@ -77,13 +77,11 @@ angular.module($APP.name).factory('DownloadsService', [
                                     function() {},
                                     false)
                             }
-                        })
+                        });
                     }).error(function(response) {
                         console.log(response);
                     });
-            }
-
-
-        };
-    }
+            };
+        }
+    };
 ]);
