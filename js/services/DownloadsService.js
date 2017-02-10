@@ -12,7 +12,6 @@ angular.module($APP.name).factory('DownloadsService', [
                     })
                     .success(function(data, status, headers) {
                         $ionicPlatform.ready(function() {
-<<<<<<< HEAD
                             if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
                                 if (typeof cordova == 'undefined') {
                                     cordova = {};
@@ -51,7 +50,7 @@ angular.module($APP.name).factory('DownloadsService', [
                                                 );
                                             },
                                             false);
-=======
+
 
                             if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
 
@@ -66,13 +65,10 @@ angular.module($APP.name).factory('DownloadsService', [
                                         // success
                                         console.log('dir created');
                                         console.log(success);
->>>>>>> origin/master
                                     }, function(error) {
                                         // error
                                         console.log(error);
                                     });
-<<<<<<< HEAD
-=======
 
                                 // Download
                                 var fileTransfer = new FileTransfer();
@@ -91,7 +87,6 @@ angular.module($APP.name).factory('DownloadsService', [
                                         console.log("upload error code" + error.code);
                                     }
                                 );
->>>>>>> origin/master
                             }
                         })
                     }).error(function(response) {
