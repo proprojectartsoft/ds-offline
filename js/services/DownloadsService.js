@@ -1,58 +1,89 @@
 angular.module($APP.name).factory('DownloadsService', [
     '$http',
     '$rootScope',
-    'Blob',
-    'FileSaver',
-  //  '$ionicPlatform',
-    function($http, $rootScope, FileSaver) {
+    '$ionicPlatform',
+    '$cordovaFile',
+    '$cordovaFileTransfer',
+    function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer) {
         return {
             downloadPdf: function(base64String) {
+                function download() {
+                    document.addEventListener(
+                        "deviceready",
+                        function() {
+                            var fileTransfer = new FileTransfer();
+                            var uri = encodeURI("$APP.server + '/pub/drawings/' + base64String"); // encodeURI("http://ionicframework.com/img/ionic-logo-blog.png");
+
+                            fileTransfer.download(
+                                uri,
+                                fileURL,
+                                function(entry) {
+                                    console.log("download complete: " + entry.toURL());
+                                    $scope.Path = fileURL;
+                                },
+                                function(error) {
+                                    console.log("download error source " + error.source);
+                                    console.log("download error target " + error.target);
+                                    console.log("upload error code" + error.code);
+                                }
+                            );
+                        },
+                        false);
+                }
+
+                function createDirectory(dataDirectory, directory, replace, successCallback, errorCallback) {
+                    //TODO: keep in indexdb
+                    $cordovaFile.createDir(dataDirectory, directory, replace)
+                        .then(function(success) {
+                            console.log('dir created');
+                            successCallback();
+                        }, function(error) {
+                            console.log(error);
+                            errorCallback(error);
+                        });
+                }
+
                 return $http.get($APP.server + '/pub/drawings/' + base64String, {
                         responseType: 'blob'
                     })
                     .success(function(data, status, headers) {
-                      $ionicPlatform.ready(function() {
-
-                          if(ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()){
-
-                                fileTransferDir = cordova.file.dataDirectory;
-                                var fileURL = fileTransferDir + 'test/test.jpg';
-
-                              // CREATE
-                                  $cordovaFile.createDir(fileTransferDir, "test", false)
-                                    .then(function (success) {
-                                      // success
-                                      console.log('dir created');
-                                      console.log(success);
-                                    }, function (error) {
-                                      // error
-                                      console.log(error);
-                                    });
-
-                              // Download
-
-                              var fileTransfer = new FileTransfer();
-                              var uri = encodeURI("http://ionicframework.com/img/ionic-logo-blog.png");
-
-                              fileTransfer.download(
-                                  uri,
-                                  fileURL,
-                                  function(entry) {
-                                      console.log("download complete: " + entry.toURL());
-                                      $scope.Path=fileURL;
-                                  },
-                                  function(error) {
-                                      console.log("download error source " + error.source);
-                                      console.log("download error target " + error.target);
-                                      console.log("upload error code" + error.code);
-                                  }
-                              );
-                          }
-                      })
+                        $ionicPlatform.ready(function() {
+                            if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
+                                if (typeof cordova == 'undefined') {
+                                    cordova = {};
+                                    cordova.file = {
+                                        dataDirectory: '///'
+                                    }
+                                }
+                                console.log("cordova base dir: " + cordova.file.dataDirectory);
+                                document.addEventListener(
+                                    "deviceready",
+                                    function() {
+                                        $cordovaFile.getFreeDiskSpace()
+                                            .then(function(success) {
+                                                    //  success in kilobytes
+                                                    createDirectory(cordova.file.dataDirectory, 'ds-downloads', true,
+                                                        function() {
+                                                            download();
+                                                        },
+                                                        function(error) {
+                                                            console.log(error);
+                                                        });
+                                                },
+                                                function(error) {
+                                                    console.log(error);
+                                                });
+                                    },
+                                    function() {},
+                                    false)
+                            }
+                        })
                     }).error(function(response) {
                         console.log(response);
                     });
             }
+
+
         };
     }
 ]);
