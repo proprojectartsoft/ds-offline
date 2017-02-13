@@ -110,7 +110,8 @@ angular.module($APP.name).factory('DownloadsService', [
                                     false)
                             }
                         });
-                    }).error(function(response) {
+                    })
+                    .error(function(response) {
                         console.log(response);
                     });
             }
