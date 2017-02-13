@@ -7,7 +7,20 @@ angular.module($APP.name).factory('DownloadsService', [
     function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer) {
         return {
             downloadPdf: function(base64String) {
-                function download() {
+
+                function createDirectory(dataDirectory, directory, replace, successCallback, errorCallback) {
+                    //TODO: keep in indexdb
+                    $cordovaFile.createDir(cordova.file.externalDataDirectory, directory, replace) //dataDirectory
+                        .then(function(success) {
+                            console.log('dir created');
+                            successCallback();
+                        }, function(error) {
+                            console.log(error);
+                            errorCallback(error);
+                        });
+                }
+
+                function download(fileURL) {
                     document.addEventListener(
                         "deviceready",
                         function() {
@@ -19,7 +32,7 @@ angular.module($APP.name).factory('DownloadsService', [
                                 fileURL,
                                 function(entry) {
                                     console.log("download complete: " + entry.toURL());
-                                    $scope.Path = fileURL;
+                                    //$scope.Path = fileURL;
                                 },
                                 function(error) {
                                     console.log("download error source " + error.source);
@@ -31,89 +44,46 @@ angular.module($APP.name).factory('DownloadsService', [
                         false);
                 }
 
-                function createDirectory(dataDirectory, directory, replace, successCallback, errorCallback) {
-                    //TODO: keep in indexdb
-                    $cordovaFile.createDir(dataDirectory, directory, replace)
-                        .then(function(success) {
-                            console.log('dir created');
-                            successCallback();
-                        }, function(error) {
-                            console.log(error);
-                            errorCallback(error);
-                        });
-                }
-
-                return $http.get($APP.server + '/pub/drawings/' + base64String, {
-                        responseType: 'blob'
-                    })
-                    .success(function(data, status, headers) {
-                        $ionicPlatform.ready(function() {
-                            if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
-                                if (typeof cordova == 'undefined') {
-                                    cordova = {};
-                                    cordova.file = {
-                                        dataDirectory: 'local/'
-                                    }
-                                }
-
-                                // window.resolveLocalFileSystemURL("$APP.server + '/pub/drawings/' + base64String",
-                                //     function(fileEntry) {
-                                //         fileEntry.file(function(fileObj) {
-                                //                 console.log("Size = " + fileObj.size);
-                                //             },
-                                //             function(error) {
-                                //
-                                //             });
-                                //     },
-                                //     function(error) {
-                                //
-                                //     }
-                                // );
-
-                                //cordova.file.applicationDirectory - directory where app is installed
-                                //
-
-                                createDirectory(cordova.file.dataDirectory, 'ds-downloads', true,
-                                    function() {
-                                        download();
-                                    },
-                                    function(error) {
-                                        console.log(error);
-                                    });
-
-
-
-                                console.log("cordova base dir: " + cordova.file.dataDirectory);
-                                document.addEventListener(
-                                    "deviceready",
-                                    function() {
-                                        $cordovaFile.getFreeDiskSpace()
-                                            .then(function(success) {
-                                                    console.log(success);
-                                                    // createDirectory(cordova.file.dataDirectory, 'ds-downloads', true,
-                                                    //     function() {
-                                                    //         download();
-                                                    //     },
-                                                    //     function(error) {
-                                                    //         console.log(error);
-                                                    //     });
-
-                                                    //success in kilobytes
-                                                },
-                                                function(error) {
-                                                    console.log(error);
-                                                });
-                                    },
-                                    function(error) {
-                                        console.log(error);
-                                    },
-                                    false)
+                return $ionicPlatform.ready(function() {
+                    if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
+                        if (typeof cordova == 'undefined') {
+                            cordova = {};
+                            cordova.file = {
+                                dataDirectory: 'local/'
                             }
-                        });
-                    })
-                    .error(function(response) {
-                        console.log(response);
-                    });
+                        }
+
+                        createDirectory(cordova.file.dataDirectory, 'ds-downloads', false,
+                            function() {
+                                var fileURL = cordova.file.dataDirectory + '/ds-downloads/' + base64String;
+                                download(fileURL);
+                            },
+                            function(error) {
+                                console.log(error);
+                            });
+
+                        console.log("cordova base dir: " + cordova.file.dataDirectory);
+                        document.addEventListener(
+                            "deviceready",
+                            function() {
+                                $cordovaFile.getFreeDiskSpace()
+                                    .then(function(success) {
+                                            console.log(success);
+                                            //  success in kilobytes
+                                            // createDirectory HERE!!!
+
+                                        },
+                                        function(error) {
+
+                                            console.log(error);
+                                        });
+                            },
+                            function(error) {
+                                console.log(error);
+                            },
+                            false)
+                    }
+                });
             }
         }
     }
