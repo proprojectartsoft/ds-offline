@@ -40,7 +40,7 @@ angular.module($APP.name).factory('DownloadsService', [
             },
 
             createDirectory: function(dirName) {
-                return $ionicPlatform.ready(function() {
+                $ionicPlatform.ready(function() {
                     if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
                         if (typeof cordova == 'undefined') {
                             cordova = {};
