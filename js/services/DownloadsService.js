@@ -15,7 +15,7 @@ angular.module($APP.name).factory('DownloadsService', [
                             "deviceready",
                             function() {
                                 var fileTransfer = new FileTransfer();
-                                var uri = encodeURI("$APP.server + '/pub/drawings/' + base64String");
+                                var uri = encodeURI($APP.server + '/pub/drawings/' + base64String);
                                 var fileURL = path + "/" + base64String;
                                 console.log("file path: " + fileURL);
 
