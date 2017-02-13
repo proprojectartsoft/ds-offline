@@ -40,26 +40,31 @@ angular.module($APP.name).factory('DownloadsService', [
             },
 
             createDirectory: function(dirName) {
-                $ionicPlatform.ready(function() {
-                    if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
-                        if (typeof cordova == 'undefined') {
-                            cordova = {};
-                            cordova.file = {
-                                dataDirectory: '///'
-                            }
-                        }
+                return create();
 
-                        $cordovaFile.createDir(cordova.file.dataDirectory, dirName, false)
-                            .then(function(success) {
-                                console.log('dir created:');
-                                console.log(success);
-                                return cordova.file.dataDirectory + "/" + dirName;
-                            }, function(error) {
-                                console.log(error);
-                                return false;
-                            });
-                    }
-                })
+                function create() {
+                    var path = "";
+                    $ionicPlatform.ready(function() {
+                        if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
+                            if (typeof cordova == 'undefined') {
+                                cordova = {};
+                                cordova.file = {
+                                    dataDirectory: '///'
+                                }
+                            }
+
+                            $cordovaFile.createDir(cordova.file.dataDirectory, dirName, true)
+                                .then(function(success) {
+                                    console.log('dir created:');
+                                    console.log(success);
+                                    path = cordova.file.dataDirectory + "/" + dirName;
+                                }, function(error) {
+                                    console.log(error);
+                                });
+                        }
+                    })
+                    return path;
+                }
             }
         }
     }
