@@ -55,8 +55,10 @@ angular.module($APP.name).factory('SyncService', [
                         function getProjects() {
                             var def = $q.defer();
                             syncData().then(function() {
-
                                 var path = DownloadsService.createDirectory("ds-downloads");
+                                // DownloadsService.createDirectory("ds-downloads").then(function(result) {
+                                //     path = result;
+                                // });
                                 ProjectService.list().then(function(projects) {
                                     angular.forEach(projects, function(project) {
                                         DrawingsService.list(project.id).then(function(drawings) {
@@ -64,7 +66,7 @@ angular.module($APP.name).factory('SyncService', [
                                             angular.forEach(drawings, function(draw) {
                                                 DrawingsService.get_original(draw.id).then(function(result) {
 
-                                                    DownloadsService.downloadPdf(path, result.base64String).then(function(res) {
+                                                    DownloadsService.downloadPdf(path.value, result.base64String).then(function(res) {
                                                         console.log(res);
                                                         // project.drawings.draw = res;
                                                         //  {

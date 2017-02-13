@@ -4,7 +4,8 @@ angular.module($APP.name).factory('DownloadsService', [
     '$ionicPlatform',
     '$cordovaFile',
     '$cordovaFileTransfer',
-    function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer) {
+    '$q',
+    function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer, $q) {
         return {
             downloadPdf: function(path, base64String) {
                 return $ionicPlatform.ready(function() {
@@ -43,7 +44,8 @@ angular.module($APP.name).factory('DownloadsService', [
                 return create();
 
                 function create() {
-                    var path = "";
+                    var deferred = $q.defer();
+
                     $ionicPlatform.ready(function() {
                         if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
                             if (typeof cordova == 'undefined') {
@@ -57,13 +59,14 @@ angular.module($APP.name).factory('DownloadsService', [
                                 .then(function(success) {
                                     console.log('dir created:');
                                     console.log(success);
-                                    path = cordova.file.dataDirectory + "/" + dirName;
+                                    deferred.resolve(cordova.file.dataDirectory + "/" + dirName);
                                 }, function(error) {
                                     console.log(error);
+                                    deferred.resolve("sdf");
                                 });
                         }
                     })
-                    return path;
+                    return deferred.promise.$$state;
                 }
             }
         }
