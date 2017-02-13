@@ -7,10 +7,8 @@ angular.module($APP.name).factory('DownloadsService', [
     function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer) {
         return {
             downloadPdf: function(base64String) {
-
                 function createDirectory(dataDirectory, directory, replace, successCallback, errorCallback) {
-                    //TODO: keep in indexdb
-                    $cordovaFile.createDir(cordova.file.externalDataDirectory, directory, replace) //dataDirectory
+                    $cordovaFile.createDir(dataDirectory, directory, replace)
                         .then(function(success) {
                             console.log('dir created');
                             successCallback();
@@ -49,13 +47,14 @@ angular.module($APP.name).factory('DownloadsService', [
                         if (typeof cordova == 'undefined') {
                             cordova = {};
                             cordova.file = {
-                                dataDirectory: 'local/'
+                                dataDirectory: '///'
                             }
                         }
 
                         createDirectory(cordova.file.dataDirectory, 'ds-downloads', false,
                             function() {
                                 var fileURL = cordova.file.dataDirectory + '/ds-downloads/' + base64String;
+                                //TODO: STORE fileUrl into indexDB
                                 download(fileURL);
                             },
                             function(error) {
