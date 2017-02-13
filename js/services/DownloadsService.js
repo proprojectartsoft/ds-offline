@@ -56,10 +56,6 @@ angular.module($APP.name).factory('DownloadsService', [
                                     }
                                 }
 
-
-
-
-
                                 // window.resolveLocalFileSystemURL("$APP.server + '/pub/drawings/' + base64String",
                                 //     function(fileEntry) {
                                 //         fileEntry.file(function(fileObj) {
@@ -94,7 +90,6 @@ angular.module($APP.name).factory('DownloadsService', [
                                         $cordovaFile.getFreeDiskSpace()
                                             .then(function(success) {
                                                     console.log(success);
-                                                    //  success in kilobytes
                                                     // createDirectory(cordova.file.dataDirectory, 'ds-downloads', true,
                                                     //     function() {
                                                     //         download();
@@ -102,6 +97,8 @@ angular.module($APP.name).factory('DownloadsService', [
                                                     //     function(error) {
                                                     //         console.log(error);
                                                     //     });
+
+                                                    //success in kilobytes
                                                 },
                                                 function(error) {
                                                     console.log(error);
