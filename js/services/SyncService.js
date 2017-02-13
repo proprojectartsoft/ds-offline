@@ -30,12 +30,6 @@ angular.module($APP.name).factory('SyncService', [
                             $indexedDB.openStore('projects', function(store) {
                                 store.getAll().then(function(projects) {
                                     if (projects.length != 0) {
-                                        /*
-                                        case 0: on server
-                                        case 1: add
-                                        case 2: delete
-                                        case 3: update
-                                        */
                                         // angular.forEach(projects, function(proj) {
                                         //     if (proj.value.isNew) {
                                         //         delete proj.value.op;
@@ -61,15 +55,17 @@ angular.module($APP.name).factory('SyncService', [
                         function getProjects() {
                             var def = $q.defer();
                             syncData().then(function() {
+
+                              var dir = DownloadsService.createDirectory("ds-downloads");
+
                                 ProjectService.list().then(function(projects) {
-                                    console.log(projects);
                                     angular.forEach(projects, function(project) {
                                         DrawingsService.list(project.id).then(function(drawings) {
                                             project.drawings = drawings;
                                             angular.forEach(drawings, function(draw) {
-                                                DrawingsService.get_original(draw.id).then(function(result) { //TODO: id
-                                                    //check if suffiecient space on disk
-                                                    DownloadsService.downloadPdf(result.base64String).then(function(res) {
+                                                DrawingsService.get_original(draw.id).then(function(result) {
+
+                                                    DownloadsService.downloadPdf(dir, result.base64String).then(function(res) {
                                                         console.log(res);
                                                         // project.drawings.draw = res;
                                                         //  {
