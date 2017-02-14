@@ -44,41 +44,47 @@ angular.module($APP.name).factory('SyncService', [
                         function getProjects() {
                             var def = $q.defer();
                             syncData().then(function() {
-                                var path = DownloadsService.createDirectory("ds-downloads");
-                                ProjectService.list().then(function(projects) {
-                                    angular.forEach(projects, function(project) {
-                                        DrawingsService.list(project.id).then(function(drawings) {
-                                            project.drawings = drawings;
-                                            angular.forEach(drawings, function(draw) {
-                                                DrawingsService.get_original(draw.id).then(function(result) {
-                                                    //if download == true store draw path; else message
-                                                    if (DownloadsService.downloadPdf(path.value, result.base64String)) {
-                                                        // project.drawings.draw = res;
-                                                        //  {
-                                                        //     "title": res.title,
-                                                        //     "base64String": res.base64String //TODO: save entire download path
-                                                        // }
-                                                        // def.resolve(projects);
-                                                    } else {
-                                                        def.reject('fail');
-                                                    }
+                                DownloadsService.createDirectory("ds-downloads").then(function(res) {
+                                    if (res == 'fail') {
+                                        def.reject('fail create directory');
+                                        return;
+                                    }
+                                    ProjectService.list().then(function(projects) {
+                                        angular.forEach(projects, function(project) {
+                                            DrawingsService.list(project.id).then(function(drawings) {
+                                                project.drawings = drawings;
+                                                angular.forEach(drawings, function(draw) {
+                                                    DrawingsService.get_original(draw.id).then(function(result) {
+                                                        //if download == true store draw path; else message
+                                                        DownloadsService.downloadPdf(res, result.base64String).then(function(downloadRes) {
+                                                            if (downloadRes == "") {
+                                                                def.reject('fail download');
+                                                                return;
+                                                            }
+                                                            project.drawings.draw = {
+                                                                "title": res.title,
+                                                                "base64String": downloadRes //TODO: save entire download path
+                                                            }
+                                                            def.resolve(projects);
+                                                        })
+                                                    })
                                                 })
                                             })
-                                        })
 
-                                        SubcontractorsService.list(project.id).then(function(subcontractors) {
-                                            project.subcontractors = subcontractors;
-                                        })
+                                            SubcontractorsService.list(project.id).then(function(subcontractors) {
+                                                project.subcontractors = subcontractors;
+                                            })
 
-                                        DefectsService.list_small(project.id).then(function(defects) {
-                                            project.defects = defects;
-                                        })
+                                            DefectsService.list_small(project.id).then(function(defects) {
+                                                project.defects = defects;
+                                            })
 
-                                        if ((projects[projects.length - 1] === project)) {
-                                            $timeout(function() {
-                                                def.resolve(projects)
-                                            }, 5000);
-                                        }
+                                            if ((projects[projects.length - 1] === project)) {
+                                                $timeout(function() {
+                                                    def.resolve(projects)
+                                                }, 5000);
+                                            }
+                                        })
                                     })
                                 })
                             })

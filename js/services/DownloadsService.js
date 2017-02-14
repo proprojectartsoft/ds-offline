@@ -7,73 +7,63 @@ angular.module($APP.name).factory('DownloadsService', [
     '$q',
     function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer, $q) {
         return {
-            downloadPdf: function(path, base64String) {
-                return download();
+            downloadPdf: function(dir, base64String) {
+                var path = "";
+                return $ionicPlatform.ready(function() {
+                    if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
+                        //TODO: check space in directory; check needed space; download if enough
+                        document.addEventListener(
+                            "deviceready",
+                            function() {
+                                var fileTransfer = new FileTransfer();
+                                var uri = encodeURI($APP.server + '/pub/drawings/' + base64String);
+                                var fileURL = dir + "/" + base64String;
+                                console.log("file path: " + fileURL);
 
-                function download() {
-                    var deferred = $q.defer();
-                    $ionicPlatform.ready(function() {
-                        if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
-                            //TODO: check space in directory; check needed space; download if enough
-                            document.addEventListener(
-                                "deviceready",
-                                function() {
-                                    var fileTransfer = new FileTransfer();
-                                    var uri = encodeURI($APP.server + '/pub/drawings/' + base64String);
-                                    var fileURL = path + "/" + base64String;
-                                    console.log("file path: " + fileURL);
-
-                                    fileTransfer.download(
-                                        uri,
-                                        fileURL,
-                                        function(entry) {
-                                            console.log("download complete: " + entry.toURL());
-                                            //$scope.Path = fileURL;
-                                            deferred.resolve(true);
-                                        },
-                                        function(error) {
-                                            console.log("download error source " + error.source);
-                                            console.log("download error target " + error.target);
-                                            console.log("upload error code " + error.code);
-                                            deferred.resolve(false);
-                                        }
-                                    );
-                                },
-                                false);
-                        }
-                    });
-                }
-                return deferred.promise;
+                                fileTransfer.download(
+                                    uri,
+                                    fileURL,
+                                    function(entry) {
+                                        console.log("download complete: " + entry.toURL());
+                                        path = fileURL;
+                                    },
+                                    function(error) {
+                                        console.log("download error source " + error.source);
+                                        console.log("download error target " + error.target);
+                                        console.log("upload error code " + error.code);
+                                    }
+                                );
+                            },
+                            false);
+                    }
+                }).then(function(success) {
+                    return path;
+                })
             },
 
             createDirectory: function(dirName) {
-                return create();
-
-                function create() {
-                    var deferred = $q.defer();
-
-                    $ionicPlatform.ready(function() {
-                        if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
-                            if (typeof cordova == 'undefined') {
-                                cordova = {};
-                                cordova.file = {
-                                    dataDirectory: '///'
-                                }
+                var path = "";
+                return $ionicPlatform.ready(function() {
+                    if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
+                        if (typeof cordova == 'undefined') {
+                            cordova = {};
+                            cordova.file = {
+                                dataDirectory: '///'
                             }
-
-                            $cordovaFile.createDir(cordova.file.dataDirectory, dirName, true)
-                                .then(function(success) {
-                                    console.log('dir created:');
-                                    console.log(success);
-                                    deferred.resolve(cordova.file.dataDirectory + "/" + dirName);
-                                }, function(error) {
-                                    console.log(error);
-                                    deferred.resolve("");
-                                });
                         }
-                    })
-                    return deferred.promise.$$state;
-                }
+
+                        $cordovaFile.createDir(cordova.file.dataDirectory, dirName, true)
+                            .then(function(success) {
+                                console.log('dir created:');
+                                path = cordova.file.dataDirectory + "/" + dirName;
+                            }, function(error) {
+                                console.log(error);
+                                path = "fail";
+                            });
+                    }
+                }).then(function(success) {
+                    return path;
+                })
             }
         }
     }
