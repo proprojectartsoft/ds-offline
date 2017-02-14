@@ -61,10 +61,7 @@ angular.module($APP.name).factory('SyncService', [
                                                                 def.reject('fail download');
                                                                 return;
                                                             }
-                                                            project.drawings.draw = {
-                                                                "title": res.title,
-                                                                "base64String": downloadRes //TODO: save entire download path
-                                                            }
+                                                            draw.base64String = downloadRes;
                                                             def.resolve(projects);
                                                         })
                                                     })
