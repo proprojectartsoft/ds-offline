@@ -30,19 +30,8 @@ angular.module($APP.name).factory('SyncService', [
                             $indexedDB.openStore('projects', function(store) {
                                 store.getAll().then(function(projects) {
                                     if (projects.length != 0) {
-                                        // angular.forEach(projects, function(proj) {
-                                        //     if (proj.value.isNew) {
-                                        //         delete proj.value.op;
-                                        //         console.log("without isNew :");
-                                        //         console.log(proj.value);
-                                        //         ProjectService.create(proj.value).then(function(result) {
-                                        //             console.log(result);
-                                        //         })
-                                        //     }
-                                        //     if ((projects[projects.length - 1] === proj)) {
-                                        //         def.resolve();
-                                        //     }
-                                        // })
+
+                                        //TODO: save each new pdf to server: DrawingsService.storeNewPdf
                                         def.resolve();
                                     } else {
                                         def.resolve();
@@ -56,24 +45,23 @@ angular.module($APP.name).factory('SyncService', [
                             var def = $q.defer();
                             syncData().then(function() {
                                 var path = DownloadsService.createDirectory("ds-downloads");
-                                // DownloadsService.createDirectory("ds-downloads").then(function(result) {
-                                //     path = result;
-                                // });
                                 ProjectService.list().then(function(projects) {
                                     angular.forEach(projects, function(project) {
                                         DrawingsService.list(project.id).then(function(drawings) {
                                             project.drawings = drawings;
                                             angular.forEach(drawings, function(draw) {
                                                 DrawingsService.get_original(draw.id).then(function(result) {
-
-                                                    DownloadsService.downloadPdf(path.value, result.base64String).then(function(res) {
-                                                        console.log(res);
+                                                    //if download == true store draw path; else message
+                                                    if (DownloadsService.downloadPdf(path.value, result.base64String)) {
                                                         // project.drawings.draw = res;
                                                         //  {
                                                         //     "title": res.title,
                                                         //     "base64String": res.base64String //TODO: save entire download path
                                                         // }
-                                                    })
+                                                        // def.resolve(projects);
+                                                    } else {
+                                                        def.reject('fail');
+                                                    }
                                                 })
                                             })
                                         })
@@ -117,6 +105,19 @@ angular.module($APP.name).factory('SyncService', [
                                     })
                                 })
                             })
+                        }, function(error) {
+                            var offlinePopup = $ionicPopup.alert({
+                                title: "Download failed",
+                                template: "<center>Failed to download files. You cannot work offline.</center>",
+                                content: "",
+                                buttons: [{
+                                    text: 'Ok',
+                                    type: 'button-positive',
+                                    onTap: function(e) {
+                                        offlinePopup.close();
+                                    }
+                                }]
+                            });
                         })
                     } else {
                         var savedCredentials = localStorage.getObject('dsremember');

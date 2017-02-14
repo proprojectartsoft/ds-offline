@@ -8,36 +8,42 @@ angular.module($APP.name).factory('DownloadsService', [
     function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer, $q) {
         return {
             downloadPdf: function(path, base64String) {
-                return $ionicPlatform.ready(function() {
-                    if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
+                return download();
 
-                        document.addEventListener(
-                            "deviceready",
-                            function() {
-                                var fileTransfer = new FileTransfer();
-                                var uri = encodeURI($APP.server + '/pub/drawings/' + base64String);
-                                var fileURL = path + "/" + base64String;
-                                console.log("file path: " + fileURL);
+                function download() {
+                    var deferred = $q.defer();
+                    $ionicPlatform.ready(function() {
+                        if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
+                            //TODO: check space in directory; check needed space; download if enough
+                            document.addEventListener(
+                                "deviceready",
+                                function() {
+                                    var fileTransfer = new FileTransfer();
+                                    var uri = encodeURI($APP.server + '/pub/drawings/' + base64String);
+                                    var fileURL = path + "/" + base64String;
+                                    console.log("file path: " + fileURL);
 
-                                fileTransfer.download(
-                                    uri,
-                                    fileURL,
-                                    function(entry) {
-                                        console.log("download complete: " + entry.toURL());
-                                        //$scope.Path = fileURL;
-                                    },
-                                    function(error) {
-                                        console.log("download error source " + error.source);
-                                        console.log("download error target " + error.target);
-                                        console.log("upload error code " + error.code);
-                                    }
-                                );
-                            },
-                            false);
-
-                        //TODO: check space in directory; check needed space; download if enough
-                    }
-                });
+                                    fileTransfer.download(
+                                        uri,
+                                        fileURL,
+                                        function(entry) {
+                                            console.log("download complete: " + entry.toURL());
+                                            //$scope.Path = fileURL;
+                                            deferred.resolve(true);
+                                        },
+                                        function(error) {
+                                            console.log("download error source " + error.source);
+                                            console.log("download error target " + error.target);
+                                            console.log("upload error code " + error.code);
+                                            deferred.resolve(false);
+                                        }
+                                    );
+                                },
+                                false);
+                        }
+                    });
+                }
+                return deferred.promise;
             },
 
             createDirectory: function(dirName) {
@@ -62,7 +68,7 @@ angular.module($APP.name).factory('DownloadsService', [
                                     deferred.resolve(cordova.file.dataDirectory + "/" + dirName);
                                 }, function(error) {
                                     console.log(error);
-                                    deferred.resolve("sdf");
+                                    deferred.resolve("");
                                 });
                         }
                     })
