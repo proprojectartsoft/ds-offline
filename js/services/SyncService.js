@@ -13,10 +13,11 @@ angular.module($APP.name).factory('SyncService', [
     'DownloadsService',
     function($q, $http, $rootScope, $indexedDB, $state, $timeout, $ionicPopup, ProjectService, DrawingsService, SubcontractorsService, DefectsService, DownloadsService) {
         return {
-
             sync: function() {
                 $timeout(function() {
                     var deferred = $q.defer();
+                    var failed = false;
+
                     if (navigator.onLine) {
                         var syncPopup = $ionicPopup.alert({
                             title: "Syncing",
@@ -45,27 +46,27 @@ angular.module($APP.name).factory('SyncService', [
                             var def = $q.defer();
                             syncData().then(function() {
                                 DownloadsService.createDirectory("ds-downloads").then(function(res) {
-                                    if (res == 'fail') {
-                                        def.reject('fail create directory');
-                                        return;
-                                    }
+                                    if (res == 'fail')
+                                        failed = true;
                                     ProjectService.list().then(function(projects) {
                                         angular.forEach(projects, function(project) {
                                             DrawingsService.list(project.id).then(function(drawings) {
                                                 project.drawings = drawings;
-                                                angular.forEach(drawings, function(draw) {
-                                                    DrawingsService.get_original(draw.id).then(function(result) {
-                                                        //if download == true store draw path; else message
-                                                        DownloadsService.downloadPdf(res, result.base64String).then(function(downloadRes) {
-                                                            if (downloadRes == "" || downloadRes == 'fail') {
-                                                                def.reject('fail download');
-                                                                return;
-                                                            }
-                                                            draw.base64String = downloadRes;
-                                                            def.resolve(projects);
+                                                if (!failed) {
+                                                    angular.forEach(drawings, function(draw) {
+                                                        DrawingsService.get_original(draw.id).then(function(result) {
+                                                            DownloadsService.downloadPdf(res, result.base64String).then(function(downloadRes) {
+                                                                if (downloadRes == "" || downloadRes == 'fail') {
+                                                                    failed = true;
+                                                                    def.resolve(projects);
+                                                                    return;
+                                                                }
+                                                                draw.base64String = downloadRes;
+                                                            })
+                                                            draw.base64String = "downloadRes";
                                                         })
                                                     })
-                                                })
+                                                }
                                             })
 
                                             SubcontractorsService.list(project.id).then(function(subcontractors) {
@@ -88,7 +89,7 @@ angular.module($APP.name).factory('SyncService', [
                             return def.promise;
                         }
 
-                        getProjects().then(function(projects) {
+                        function storeToIndexDb(projects) {
                             $indexedDB.openStore('projects', function(store) {
                                 store.clear();
                             }).then(function(e) {
@@ -108,19 +109,24 @@ angular.module($APP.name).factory('SyncService', [
                                     })
                                 })
                             })
-                        }, function(error) {
-                            var offlinePopup = $ionicPopup.alert({
-                                title: "Download stopped",
-                                template: "<center>Not enough space to download all files</center>",
-                                content: "",
-                                buttons: [{
-                                    text: 'Ok',
-                                    type: 'button-positive',
-                                    onTap: function(e) {
-                                        offlinePopup.close();
-                                    }
-                                }]
-                            });
+                        }
+
+                        getProjects().then(function(projects) {
+                            if (failed == true) {
+                                var downloadPopup = $ionicPopup.alert({
+                                    title: "Download stopped",
+                                    template: "<center>Not enough space to download all files</center>",
+                                    content: "",
+                                    buttons: [{
+                                        text: 'Ok',
+                                        type: 'button-positive',
+                                        onTap: function(e) {
+                                            storeToIndexDb(projects);
+                                            downloadPopup.close();
+                                        }
+                                    }]
+                                });
+                            }
                         })
                     } else {
                         var savedCredentials = localStorage.getObject('dsremember');

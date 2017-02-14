@@ -31,9 +31,7 @@ angular.module($APP.name).controller('DrawingsCtrl', [
         var width = $("#canvasCointainer").width();
         var perc = width / 12;
 
-
-        var setPdf = function(url) { //base64String
-            //    var url = $APP.server + '/pub/drawings/' + base64String; 
+        var setPdf = function(url) {
             PDFJS.getDocument(url).then(function(pdf) {
                 pdf.getPage(1).then(function(page) {
                     var widthToBe = 480;

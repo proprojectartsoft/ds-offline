@@ -20,6 +20,31 @@ angular.module($APP.name).factory('DownloadsService', [
                                 var fileURL = dir + "/" + base64String;
                                 console.log("file path: " + fileURL);
 
+                                var deviceSpace = 0,
+                                    fileSize = 0;
+                                cordova.exec(
+                                    function(freeSpace) {
+                                        deviceSpace = freeSpace;
+                                    },
+                                    function() {},
+                                    "File", "getFreeDiskSpace", []);
+
+                                window.resolveLocalFileSystemURI(uri,
+                                    function(fileEntry) {
+                                        fileEntry.file(function(fileObj) {
+                                                console.log("Size = " + fileObj.size);
+                                                fileSize = fileObj.size;
+                                            },
+                                            function(error) {});
+                                    },
+                                    function(error) {}
+                                );
+
+                                if (fileSize > deviceSpace - 500) {
+                                    def.resolve('fail');
+                                    return;
+                                }
+
                                 fileTransfer.download(
                                     uri,
                                     fileURL,
