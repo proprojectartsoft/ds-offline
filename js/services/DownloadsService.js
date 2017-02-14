@@ -8,7 +8,7 @@ angular.module($APP.name).factory('DownloadsService', [
     function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer, $q) {
         return {
             downloadPdf: function(dir, base64String) {
-                var path = "";
+                var def = $q.defer();
                 return $ionicPlatform.ready(function() {
                     if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
                         //TODO: check space in directory; check needed space; download if enough
@@ -25,24 +25,25 @@ angular.module($APP.name).factory('DownloadsService', [
                                     fileURL,
                                     function(entry) {
                                         console.log("download complete: " + entry.toURL());
-                                        path = fileURL;
+                                        def.resolve(fileURL);
                                     },
                                     function(error) {
                                         console.log("download error source " + error.source);
                                         console.log("download error target " + error.target);
                                         console.log("upload error code " + error.code);
+                                        def.resolve('fail');
                                     }
                                 );
                             },
                             false);
                     }
                 }).then(function(success) {
-                    return path;
+                    return def.promise;
                 })
             },
 
             createDirectory: function(dirName) {
-                var path = "";
+                var def = $q.defer();
                 return $ionicPlatform.ready(function() {
                     if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
                         if (typeof cordova == 'undefined') {
@@ -55,14 +56,14 @@ angular.module($APP.name).factory('DownloadsService', [
                         $cordovaFile.createDir(cordova.file.dataDirectory, dirName, true)
                             .then(function(success) {
                                 console.log('dir created:');
-                                path = cordova.file.dataDirectory + "/" + dirName;
+                                def.resolve(cordova.file.dataDirectory + "/" + dirName);
                             }, function(error) {
                                 console.log(error);
-                                path = "fail";
+                                def.resolve('fail');
                             });
                     }
                 }).then(function(success) {
-                    return path;
+                    return def.promise;
                 })
             }
         }

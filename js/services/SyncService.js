@@ -57,7 +57,7 @@ angular.module($APP.name).factory('SyncService', [
                                                     DrawingsService.get_original(draw.id).then(function(result) {
                                                         //if download == true store draw path; else message
                                                         DownloadsService.downloadPdf(res, result.base64String).then(function(downloadRes) {
-                                                            if (downloadRes == "") {
+                                                            if (downloadRes == "" || downloadRes == 'fail') {
                                                                 def.reject('fail download');
                                                                 return;
                                                             }
@@ -113,8 +113,8 @@ angular.module($APP.name).factory('SyncService', [
                             })
                         }, function(error) {
                             var offlinePopup = $ionicPopup.alert({
-                                title: "Download failed",
-                                template: "<center>Failed to download files. You cannot work offline.</center>",
+                                title: "Download stopped",
+                                template: "<center>Not enough space to download all files</center>",
                                 content: "",
                                 buttons: [{
                                     text: 'Ok',
