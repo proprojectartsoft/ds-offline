@@ -89,7 +89,6 @@ angular.module($APP.name).factory('SyncService', [
                                                 if (downloadRes == "") {
                                                     failed = true;
                                                     draw.pdfPath = downloadRes;
-                                                    def.resolve(projects);
                                                     return;
                                                 }
                                                 draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
