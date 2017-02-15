@@ -1,55 +1,65 @@
 angular.module($APP.name).controller('_DefectCommentsCtrl', [
-  '$rootScope',
-  '$scope',
-  '$stateParams',
-  '$state',
-  'SettingsService',
-  '$timeout',
-  'DefectsService',
-  function ($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, DefectsService) {
-    $scope.settings= {};
-    $scope.settings.header = SettingsService.get_settings('header');
-    $scope.settings.subHeader = SettingsService.get_settings('subHeader');
-    $scope.settings.tabActive = SettingsService.get_settings('tabActive');
+    '$rootScope',
+    '$scope',
+    '$stateParams',
+    '$state',
+    'SettingsService',
+    '$timeout',
+    '$indexedDB',
+    'DefectsService',
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, DefectsService) {
+        $scope.settings = {};
+        $scope.settings.header = SettingsService.get_settings('header');
+        $scope.settings.subHeader = SettingsService.get_settings('subHeader');
+        $scope.settings.tabActive = SettingsService.get_settings('tabActive');
 
-    $scope.local = {};
-    $scope.local.loaded = false;
-    $scope.local.data = localStorage.getObject('ds.defect.active.data');
-    DefectsService.list_comments($stateParams.id).then(function(result){
-      $scope.local.loaded = true;
-      $scope.local.list = result
-    })
+        $scope.local = {};
+        $scope.local.loaded = false;
+        $scope.local.data = localStorage.getObject('ds.defect.active.data');
 
-    $scope.addComment = function(){
-      if($scope.local.comment){
-        var request = {
-          "id": 0,
-          "text": $scope.local.comment,
-          "user_id": 0,
-          "defect_id": $stateParams.id
-        };
-        DefectsService.create_comment(request).then(function(result){
-          $scope.local.comment = '';
-          DefectsService.list_comments($stateParams.id).then(function(result){
-            $scope.local.list = result
-          })
+        $indexedDB.openStore('projects', function(store) {
+            store.find(localStorage.getObject('dsproject').id).then(function(projects) {
+                angular.forEach(projects.value.defects, function(defect) {
+                    if (defect.id == $stateParams.id) {
+                        $scope.local.loaded = true;
+                        $scope.local.list = defect.comments;
+                    }
+                })
+            })
         })
-      }
-    }
-    $scope.addComentAtEnter = function(event){
-      if(event.keyCode === 13){
-        $scope.addComment();
-      }
-    }
 
-    $scope.getInitials = function (str) {
-      var aux = str.split(" ");
-      return (aux[0][0]+aux[1][0]).toUpperCase();
-    }
+        $scope.addComment = function() { //TODO:
+            if ($scope.local.comment) {
+                var request = {
+                    "id": 0,
+                    "text": $scope.local.comment,
+                    "user_id": 0,
+                    "defect_id": $stateParams.id
+                };
+                DefectsService.create_comment(request).then(function(result) {
+                    $scope.local.comment = '';
+                    DefectsService.list_comments($stateParams.id).then(function(result) {
+                        $scope.local.list = result
+                    })
+                })
+            }
+        }
+        $scope.addComentAtEnter = function(event) {
+            if (event.keyCode === 13) {
+                $scope.addComment();
+            }
+        }
 
-    $scope.back = function () {
-      $state.go('app.defects',{id: $stateParams.id})
+        $scope.getInitials = function(str) {
+            var aux = str.split(" ");
+            return (aux[0][0] + aux[1][0]).toUpperCase();
+        }
+
+        $scope.back = function() {
+            $state.go('app.defects', {
+                id: $stateParams.id
+            })
+        }
+        $scope.list = ['wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut'];
     }
-    $scope.list = ['wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut', 'wut'];
-  }
 ]);

@@ -29,19 +29,21 @@ angular.module($APP.name).factory('DownloadsService', [
                                     function() {},
                                     "File", "getFreeDiskSpace", []);
 
-                                window.resolveLocalFileSystemURI(uri,
-                                    function(fileEntry) {
-                                        fileEntry.file(function(fileObj) {
-                                                console.log("Size = " + fileObj.size);
-                                                fileSize = fileObj.size;
-                                            },
-                                            function(error) {});
-                                    },
-                                    function(error) {}
-                                );
+                                //TODO: check the size of the file to be downloaded
+                                // window.resolveLocalFileSystemURI(
+                                //     uri,
+                                //     function(fileEntry) {
+                                //         fileEntry.file(function(fileObj) {
+                                //                 console.log("Size = " + fileObj.size);
+                                //                 fileSize = fileObj.size;
+                                //             },
+                                //             function(error) {});
+                                //     },
+                                //     function(error) {}
+                                // );
 
                                 if (fileSize > deviceSpace - 500) {
-                                    def.resolve('fail');
+                                    def.resolve("");
                                     return;
                                 }
 
@@ -56,12 +58,12 @@ angular.module($APP.name).factory('DownloadsService', [
                                         console.log("download error source " + error.source);
                                         console.log("download error target " + error.target);
                                         console.log("upload error code " + error.code);
-                                        def.resolve('fail');
+                                        def.resolve("");
                                     }
                                 );
                             },
                             false);
-                    }
+                    } // else def.resolve('fail');
                 }).then(function(success) {
                     return def.promise;
                 })
@@ -86,7 +88,7 @@ angular.module($APP.name).factory('DownloadsService', [
                                 console.log(error);
                                 def.resolve('fail');
                             });
-                    }
+                    } //  else def.resolve('fail');
                 }).then(function(success) {
                     return def.promise;
                 })

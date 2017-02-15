@@ -9,9 +9,10 @@ angular.module($APP.name).controller('DefectsCtrl', [
     'ConvertersService',
     '$ionicViewSwitcher',
     '$ionicModal',
+    '$indexedDB',
     'DrawingsService',
     '$ionicPopup',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, DefectsService, ConvertersService, $ionicViewSwitcher, $ionicModal, DrawingsService, $ionicPopup) {
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, DefectsService, ConvertersService, $ionicViewSwitcher, $ionicModal, $indexedDB, DrawingsService, $ionicPopup) {
         $scope.settings = {};
         $scope.settings.subHeader = SettingsService.get_settings('subHeader');
         $scope.settings.tabActive = SettingsService.get_settings('tabActive');
@@ -30,9 +31,8 @@ angular.module($APP.name).controller('DefectsCtrl', [
             $scope.modal = modal;
         });
 
-        var setPdf = function(base64String) {
+        var setPdf = function(url) {
             $timeout(function() {
-                var url = $APP.server + '/pub/drawings/' + base64String;
                 PDFJS.getDocument(url).then(function(pdf) {
                     pdf.getPage(1).then(function(page) {
                         var widthToBe = 480;
@@ -89,7 +89,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                 }
             });
         };
-        var modalDrawing = function() {
+        var modalDrawing = function() { //TODO:
             DrawingsService.list_light($scope.settings.project.id).then(function(result) {
                 $scope.local.drawingsLight = result;
             })
@@ -112,7 +112,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
             }
         }
 
-        function newDefect() {
+        function newDefect() { //TODO:
             $rootScope.disableedit = false;
             $rootScope.thiscreate = true;
             if (localStorage.getObject('ds.drawing.defect') && !localStorage.getObject('ds.defect.drawing')) {
@@ -160,34 +160,37 @@ angular.module($APP.name).controller('DefectsCtrl', [
             }
             $rootScope.thiscreate = false;
             if (!localStorage.getObject('ds.defect.active.data') || localStorage.getObject('ds.defect.active.data').id !== parseInt($stateParams.id)) {
-                DefectsService.get($stateParams.id).then(function(result) {
-                    $scope.local.data = ConvertersService.init_defect(result);
-                    localStorage.setObject('ds.defect.active.data', $scope.local.data)
-                    $scope.settings.subHeader = 'Defect - ' + $scope.local.data.title;
-                    if ($scope.local.data.drawing && $scope.local.data.drawing.base64String) {
-                        $scope.local.data.drawing.path = $scope.local.data.drawing.base64String;
-                        $scope.local.drawing = $scope.local.data.drawing;
-                        console.log($scope.local.data.drawing);
-                        console.log($scope.local.drawing);
-                        localStorage.setObject('ds.defect.drawing', $scope.local.data.drawing);
-                        setPdf($scope.local.data.drawing.base64String)
-                    } else {
-                        showEmpty()
-                    }
+                $indexedDB.openStore('projects', function(store) {
+                    store.find(localStorage.getObject('dsproject').id).then(function(res) {
+                        angular.forEach(res.value.defects, function(defect) {
+                            if (defect.id == $stateParams.id) {
+                                $scope.local.data = ConvertersService.init_defect(defect.completeInfo);
+                                localStorage.setObject('ds.defect.active.data', $scope.local.data)
+                                $scope.settings.subHeader = 'Defect - ' + $scope.local.data.title;
+                                if ($scope.local.data.drawing && $scope.local.data.drawing.pdfPath) {
+                                    $scope.local.data.drawing.path = $scope.local.data.drawing.pdfPath;
+                                    $scope.local.drawing = $scope.local.data.drawing;
+                                    localStorage.setObject('ds.defect.drawing', $scope.local.data.drawing);
+                                    setPdf($scope.local.data.drawing.pdfPath);
+                                } else {
+                                    showEmpty()
+                                }
+                            }
+                        })
+                    })
                 })
             } else {
                 $scope.local.data = ConvertersService.init_defect(localStorage.getObject('ds.defect.active.data'));
                 $scope.settings.subHeader = 'Defect - ' + $scope.local.data.title;
-                if ($scope.local.data.drawing && $scope.local.data.drawing.base64String) {
-                    $scope.local.data.drawing.path = $scope.local.data.drawing.base64String;
+                if ($scope.local.data.drawing && $scope.local.data.drawing.pdfPath) {
+                    $scope.local.data.drawing.path = $scope.local.data.drawing.pdfPath;
                     $scope.local.drawing = localStorage.getObject('ds.defect.drawing');
-                    setPdf($scope.local.data.drawing.base64String)
+                    setPdf($scope.local.data.drawing.pdfPath);
                 } else {
                     showEmpty()
                 }
             }
         }
-
 
         $scope.toggleEdit = function() {
             $rootScope.disableedit = false;
@@ -209,7 +212,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                 });
             })
         }
-        $scope.saveCreate = function() {
+        $scope.saveCreate = function() { //TODO: create
             if ($scope.local.drawing && $scope.local.drawing.markers && $scope.local.drawing.markers.length && $scope.local.data.title) {
                 $rootScope.disableedit = true;
                 DefectsService.create(ConvertersService.save_defect($scope.local.data)).then(function(result) {
@@ -247,10 +250,8 @@ angular.module($APP.name).controller('DefectsCtrl', [
         }
 
         if ($stateParams.id === "0") {
-            //new
             newDefect();
         } else {
-            // existing defect
             existingDefect()
         }
 

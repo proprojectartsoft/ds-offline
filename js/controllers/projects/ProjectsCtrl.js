@@ -16,25 +16,13 @@ angular.module($APP.name).controller('ProjectsCtrl', [
         $scope.local.createProject = {}
         $scope.local.user = localStorage.getObject('ds.user')
 
-        // ProjectService.list().then(function(result) {
-        //     $rootScope.projects = result;
-        //     var aux = localStorage.getObject('dsproject')
-        //     if (aux) {
-        //         angular.forEach(result, function(value, key) {
-        //             if (value.id == aux.id){
-        //               $scope.local.activeProject = value;
-        //             }
-        //         });
-        //     }
-        // })
-
         $indexedDB.openStore('projects', function(store) {
             store.getAll().then(function(res) {
                 angular.forEach(res, function(proj) {
                     $rootScope.projects.push(proj.value);
                 })
 
-                console.log($rootScope.projects);
+                console.log($rootScope.projects); //TODO:delete comment
                 var aux = localStorage.getObject('dsproject')
                 if (aux) {
                     angular.forEach($rootScope.projects, function(value, key) {

@@ -5,9 +5,10 @@ angular.module($APP.name).controller('_DefectDetailsCtrl', [
     '$state',
     'SettingsService',
     '$timeout',
+    '$indexedDB',
     '$ionicModal',
     'ProjectService',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $ionicModal, ProjectService) { //   $scope.settings = {tabs:$rootScope.settings.tabs,tabActive:$rootScope.settings.tabActive};
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, $ionicModal, ProjectService) { //   $scope.settings = {tabs:$rootScope.settings.tabs,tabActive:$rootScope.settings.tabActive};
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.subHeader = SettingsService.get_settings('subHeader');
@@ -41,9 +42,13 @@ angular.module($APP.name).controller('_DefectDetailsCtrl', [
             $scope.local.data.assignee_id = item.id;
             $scope.modal.hide();
         }
-        ProjectService.users($scope.settings.project.id).then(function(result) {
-            $scope.local.poplist = result;
+
+        $indexedDB.openStore('projects', function(store) {
+            store.find($scope.settings.project.id).then(function(res) {
+                $scope.local.poplist = res.value.users;
+            })
         })
+
         if ($stateParams.id === '0') {
             $scope.settings.subHeader = 'New defect'
             $scope.local.data = localStorage.getObject('ds.defect.new.data')
@@ -52,7 +57,7 @@ angular.module($APP.name).controller('_DefectDetailsCtrl', [
             $scope.settings.subHeader = 'Defect - ' + $scope.local.data.title;
         }
         $scope.objtofields = function() {
-          console.log($scope.local.data);
+            console.log($scope.local.data);
             $scope.local.data.status_id = $scope.local.data.status_obj.id;
             $scope.local.data.status_name = $scope.local.data.status_obj.name;
             $scope.local.data.priority_id = $scope.local.data.priority_obj.id;

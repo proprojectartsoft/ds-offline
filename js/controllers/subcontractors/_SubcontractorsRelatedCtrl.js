@@ -7,9 +7,10 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
     '$timeout',
     'SubcontractorsService',
     '$ionicModal',
+    '$indexedDB',
     'DefectsService',
     'SubcontractorsService',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, SubcontractorsService, $ionicModal, DefectsService, SubcontractorsService) {
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, SubcontractorsService, $ionicModal, $indexedDB, DefectsService, SubcontractorsService) {
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.subHeader = SettingsService.get_settings('subHeader');
@@ -22,26 +23,30 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
         $scope.local.loaded = false;
         $scope.settings.subHeader = 'Subcontractor - ' + $scope.local.data.last_name + ' ' + $scope.local.data.first_name;
         console.log($scope.settings.project);
-        SubcontractorsService.list_defects($scope.settings.project.id, $scope.local.data.id).then(function(result) {
-            $scope.local.list = result;
-            $scope.local.loaded = true;
 
-            DefectsService.list_small($scope.settings.project.id).then(function(defects) {
-                $scope.local.poplist = [];
-                for (var i = 0; i < defects.length; i++) {
-                    var sw = true;
-                    for (var j = 0; j < result.length; j++) {
-                        if (defects[i].id === result[j].id) {
-                            sw = false;
+        $indexedDB.openStore('projects', function(store) {
+            store.find(localStorage.getObject('dsproject').id).then(function(res) {
+                angular.forEach(res.value.subcontractors, function(subcontr) {
+                    if (subcontr.id == $scope.local.data.id) {
+                        $scope.local.list = subcontr.related;
+                        $scope.local.loaded = true;
+                        $scope.local.poplist = [];
+
+                        for (var i = 0; i < res.value.defects.length; i++) {
+                            var sw = true;
+                            for (var j = 0; j < subcontr.related.length; j++) {
+                                if (res.value.defects[i].id === subcontr.related[j].id) {
+                                    sw = false;
+                                }
+                            }
+                            if (sw) {
+                                $scope.local.poplist.push(res.value.defects[i]);
+                            }
                         }
                     }
-                    if (sw) {
-                        $scope.local.poplist.push(defects[i]);
-                    }
-                }
+                })
             })
-
-        });
+        })
 
         $scope.goItem = function(item) {
             $scope.settings.subHeader = item.name;
@@ -59,9 +64,6 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
                 id: $stateParams.id
             })
         }
-
-
-
         $ionicModal.fromTemplateUrl('templates/defects/_popover.html', {
             scope: $scope
         }).then(function(modal) {
@@ -76,7 +78,7 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
             $scope.modal.show();
         };
 
-        $scope.addRelated = function(related) {
+        $scope.addRelated = function(related) { //TODO:
             $scope.modal.hide();
             DefectsService.get(related.id).then(function(defect) {
                 defect.assignee_id = $stateParams.id;

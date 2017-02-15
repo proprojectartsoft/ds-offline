@@ -110,9 +110,8 @@ angular.module($APP.name).controller('FullscreenCtrl', [
             }
         }
         var perc = $scope.width / 12;
-        var setPdf = function(base64String) {
+        var setPdf = function(url) {
             $timeout(function() {
-                var url = $APP.server + '/pub/drawings/' + base64String;
                 PDFJS.getDocument(url).then(function(pdf) {
                     pdf.getPage(1).then(function(page) {
                         var widthToBe = 1200;
@@ -255,22 +254,28 @@ angular.module($APP.name).controller('FullscreenCtrl', [
             if ($scope.local.data.markers && $scope.local.data.markers.length && $scope.local.data.markers[0].id) {
                 $scope.local.disableAddMarker = true;
             }
-            setPdf($scope.local.data.path)
+            console.log($scope.local.data.pdfPath);
+            setPdf($scope.local.data.path)//TODO:check
         } else {
             $scope.local.singleMarker = false;
             if (!localStorage.getObject('dsdrwact') || localStorage.getObject('dsdrwact').id !== parseInt($stateParams.id)) {
-                DrawingsService.get_original($stateParams.id).then(function(result) {
-                    localStorage.setObject('dsdrwact', result)
-                    $scope.local.data = result;
-                    $scope.settings.subHeader = 'Drawing - ' + $scope.local.data.title;
-                    setPdf($scope.local.data.base64String)
+                $indexedDB.openStore('projects', function(store) {
+                    store.find(localStorage.getObject('dsproject').id).then(function(res) {
+                        angular.forEach(res.value.drawings, function(drawing) {
+                            if (drawing.id == $stateParams.id) {
+                                localStorage.setObject('dsdrwact', drawing)
+                                $scope.local.data = drawing;
+                                $scope.settings.subHeader = 'Drawing - ' + $scope.local.data.title;
+                                setPdf($scope.local.data.pdfPath)
+                            }
+                        })
+                    })
                 })
             } else {
                 $scope.local.data = localStorage.getObject('dsdrwact');
                 $scope.settings.subHeader = 'Drawing - ' + $scope.local.data.title;
-                setPdf($scope.local.data.base64String)
+                setPdf($scope.local.data.pdfPath)
             }
-
         }
 
         $scope.back = function() {

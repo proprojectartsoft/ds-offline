@@ -45,30 +45,6 @@ angular.module($APP.name).config([
                 objStore.createIndex('id_idx', 'id', {
                     unique: true
                 });
-
-                var objStore = db.createObjectStore('drawings', {
-                    keyPath: 'id',
-                    autoIncrement: true
-                });
-                objStore.createIndex('id_idx', 'id', {
-                    unique: true
-                });
-
-                var objStore = db.createObjectStore('subcontractors', {
-                    keyPath: 'id',
-                    autoIncrement: true
-                });
-                objStore.createIndex('id_idx', 'id', {
-                    unique: true
-                });
-
-                var objStore = db.createObjectStore('defects', {
-                    keyPath: 'id',
-                    autoIncrement: true
-                });
-                objStore.createIndex('id_idx', 'id', {
-                    unique: true
-                });
             });
 
         $stateProvider

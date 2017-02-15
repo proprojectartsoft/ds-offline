@@ -31,6 +31,7 @@ angular.module($APP.name).controller('DrawingsCtrl', [
         var width = $("#canvasCointainer").width();
         var perc = width / 12;
 
+
         var setPdf = function(url) {
             PDFJS.getDocument(url).then(function(pdf) {
                 pdf.getPage(1).then(function(page) {
@@ -72,14 +73,13 @@ angular.module($APP.name).controller('DrawingsCtrl', [
 
         if (!localStorage.getObject('dsdrwact') || localStorage.getObject('dsdrwact').id !== parseInt($stateParams.id)) {
             $indexedDB.openStore('projects', function(store) {
-                var p = localStorage.getObject('dsproject');
-                store.find(p.id).then(function(res) {
+                store.find(localStorage.getObject('dsproject').id).then(function(res) {
                     angular.forEach(res.value.drawings, function(drawing) {
                         if (drawing.id == $stateParams.id) {
                             localStorage.setObject('dsdrwact', drawing)
                             $scope.local.data = drawing;
                             $scope.settings.subHeader = 'Drawing - ' + $scope.local.data.title;
-                            setPdf($scope.local.data.base64String)
+                            setPdf($scope.local.data.pdfPath)
                         }
                     })
                 })
@@ -87,13 +87,12 @@ angular.module($APP.name).controller('DrawingsCtrl', [
         } else {
             $scope.local.data = localStorage.getObject('dsdrwact');
             $scope.settings.subHeader = 'Drawing - ' + $scope.local.data.title;
-            setPdf($scope.local.data.base64String)
+            setPdf($scope.local.data.pdfPath)
         }
+
         $scope.getFullscreen = function() {
             $scope.go('fullscreen', $stateParams.id);
         }
-
-
         $scope.toggleEdit = function() {
             $rootScope.disableedit = false;
             localStorage.setObject('ds.drawing.backup', $scope.local.data)

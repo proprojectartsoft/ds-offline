@@ -35,7 +35,7 @@ angular.module($APP.name).controller('NavCtrl', [
             $rootScope.currentUser.username = result.first_name + ' ' + result.last_name;
             console.log($rootScope.currentUser);
         })
-        $scope.test = function() {
+        $scope.test = function() {  //TODO:delete
             console.log('asdasd')
         }
         $scope.redirect = function(predicate) {
@@ -44,7 +44,6 @@ angular.module($APP.name).controller('NavCtrl', [
         }
         $scope.editCurrentUser = function() {
             $scope.editMode = !$scope.editMode;
-            console.log('tiganii')
         }
         $scope.logout = function() {
             AuthService.logout().then(function(result) {
@@ -53,7 +52,7 @@ angular.module($APP.name).controller('NavCtrl', [
         }
         $scope.sync = function() {
             SyncService.sync();
-        }        
+        }
         $scope.$watch(function() {
             return localStorage.getObject('dsnavTitle')
         }, function(value) {
