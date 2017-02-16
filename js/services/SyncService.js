@@ -88,10 +88,10 @@ angular.module($APP.name).factory('SyncService', [
                                             DownloadsService.downloadPdf(path, result.base64String).then(function(downloadRes) {
                                                 if (downloadRes == "") {
                                                     failed = true;
-                                                    draw.pdfPath = downloadRes;
+                                                    draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
                                                     return;
                                                 }
-                                                draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
+                                                draw.pdfPath = downloadRes;
                                             })
                                         } else {
                                             draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
