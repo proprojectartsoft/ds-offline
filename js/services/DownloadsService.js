@@ -19,8 +19,7 @@ angular.module($APP.name).factory('DownloadsService', [
                                 var uri = encodeURI($APP.server + '/pub/drawings/' + drawing.base64String);
                                 var fileURL = dir + "/" + drawing.base64String;
                                 console.log("file path: " + fileURL);
-                                var deviceSpace = 0,
-                                    fileSize = 0;
+                                var deviceSpace = 0;
 
                                 cordova.exec(
                                     function(freeSpace) {
@@ -30,27 +29,25 @@ angular.module($APP.name).factory('DownloadsService', [
                                     "File", "getFreeDiskSpace", []);
 
                                 DrawingsService.get_pdf_size(drawing.id).then(function(res) {
-                                    fileSize = res;
-                                })
-
-                                if (fileSize > deviceSpace - 500) {
-                                    def.resolve("");
-                                    return;
-                                }
-                                fileTransfer.download(
-                                    uri,
-                                    fileURL,
-                                    function(entry) {
-                                        console.log("download complete: " + entry.toURL());
-                                        def.resolve(fileURL);
-                                    },
-                                    function(error) {
-                                        console.log("download error source " + error.source);
-                                        console.log("download error target " + error.target);
-                                        console.log("upload error code " + error.code);
+                                    if (res > deviceSpace - 500) {
                                         def.resolve("");
+                                        return;
                                     }
-                                );
+                                    fileTransfer.download(
+                                        uri,
+                                        fileURL,
+                                        function(entry) {
+                                            console.log("download complete: " + entry.toURL());
+                                            def.resolve(fileURL);
+                                        },
+                                        function(error) {
+                                            console.log("download error source " + error.source);
+                                            console.log("download error target " + error.target);
+                                            console.log("upload error code " + error.code);
+                                            def.resolve("");
+                                        }
+                                    );
+                                })
                             },
                             false);
                     } // else def.resolve('fail');
