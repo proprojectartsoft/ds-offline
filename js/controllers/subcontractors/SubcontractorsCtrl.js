@@ -23,7 +23,7 @@ angular.module($APP.name).controller('SubcontractorsCtrl', [
         if (!localStorage.getObject('dsscact') || localStorage.getObject('dsscact').id !== parseInt($stateParams.id)) {
             $indexedDB.openStore('projects', function(store) {
                 store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                    angular.forEach(res.value.subcontractors, function(subcontractor) {
+                    angular.forEach(res.subcontractors, function(subcontractor) {
                         if (subcontractor.id == $stateParams.id) {
                             delete subcontractor.company_logo;
                             localStorage.setObject('dsscact', subcontractor)

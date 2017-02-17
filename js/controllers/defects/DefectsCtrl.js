@@ -162,7 +162,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
             if (!localStorage.getObject('ds.defect.active.data') || localStorage.getObject('ds.defect.active.data').id !== parseInt($stateParams.id)) {
                 $indexedDB.openStore('projects', function(store) {
                     store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                        angular.forEach(res.value.defects, function(defect) {
+                        angular.forEach(res.defects, function(defect) {
                             if (defect.id == $stateParams.id) {
                                 $scope.local.data = ConvertersService.init_defect(defect.completeInfo);
                                 localStorage.setObject('ds.defect.active.data', $scope.local.data)
@@ -212,28 +212,58 @@ angular.module($APP.name).controller('DefectsCtrl', [
                 });
             })
         }
-        $scope.saveCreate = function() { //TODO: create
+        $scope.saveCreate = function() { //TODO:
             if ($scope.local.drawing && $scope.local.drawing.markers && $scope.local.drawing.markers.length && $scope.local.data.title) {
                 $rootScope.disableedit = true;
-                DefectsService.create(ConvertersService.save_defect($scope.local.data)).then(function(result) {
-                    localStorage.setObject('ds.defect.active.data', $scope.local.data)
-                    localStorage.removeItem('ds.defect.backup')
-                    DrawingsService.get_original($scope.local.drawing.id).then(function(drawing) {
-                        var aux = angular.copy($scope.local.drawing.markers[0])
-                        aux.defect_id = result;
-                        aux.drawing_id = $scope.local.drawing.id;
-                        aux.position_x = aux.xInit;
-                        aux.position_y = aux.yInit;
-                        drawing.markers.push(aux)
-                        DrawingsService.update(drawing).then(function(drawingupdate) {
-                            localStorage.removeItem('dsdrwact');
-                            localStorage.setObject('ds.reloadevent', {
-                                value: true
-                            });
-                            $scope.back();
-                        });
+
+                $indexedDB.openStore("projects", function(store) {
+                    store.find(localStorage.getObject('dsproject'.id)).then(function(project) {
+                        var newDef = ConvertersService.save_defect($scope.local.data);
+                        project.defects.push(newDef);
+                        saveChanges(project);
+
+                        localStorage.setObject('ds.defect.active.data', $scope.local.data);
+                        localStorage.removeItem('ds.defect.backup');
+                        forEach(project.drawings, function(drawing) {
+                            if (drawing.id == $scope.local.drawing.id) {
+                                var aux = angular.copy($scope.local.drawing.markers[0])
+                                aux.defect_id = newDef.id; //result;
+                                aux.drawing_id = $scope.local.drawing.id;
+                                aux.position_x = aux.xInit;
+                                aux.position_y = aux.yInit;
+                                drawing.markers.push(aux)
+                                DrawingsService.update(drawing).then(function(drawingupdate) {
+                                    localStorage.removeItem('dsdrwact');
+                                    localStorage.setObject('ds.reloadevent', {
+                                        value: true
+                                    });
+                                    $scope.back();
+                                });
+                            }
+                        })
                     })
                 })
+
+
+                // DefectsService.create(ConvertersService.save_defect($scope.local.data)).then(function(result) {
+                //     localStorage.setObject('ds.defect.active.data', $scope.local.data)
+                //     localStorage.removeItem('ds.defect.backup')
+                //     DrawingsService.get_original($scope.local.drawing.id).then(function(drawing) {
+                //         var aux = angular.copy($scope.local.drawing.markers[0])
+                //         aux.defect_id = result;
+                //         aux.drawing_id = $scope.local.drawing.id;
+                //         aux.position_x = aux.xInit;
+                //         aux.position_y = aux.yInit;
+                //         drawing.markers.push(aux)
+                //         DrawingsService.update(drawing).then(function(drawingupdate) {
+                //             localStorage.removeItem('dsdrwact');
+                //             localStorage.setObject('ds.reloadevent', {
+                //                 value: true
+                //             });
+                //             $scope.back();
+                //         });
+                //     })
+                // })
             } else {
                 var alertPopup = $ionicPopup.show({
                     title: 'Error',
@@ -247,6 +277,29 @@ angular.module($APP.name).controller('DefectsCtrl', [
                     console.log('Thank you for not eating my delicious ice cream cone');
                 });
             }
+        }
+
+        function saveChanges(project) {
+            $indexedDB.openStore('projects', function(store) {
+                store.upsert(project).then(
+                    function(e) {
+                        store.find(localStorage.getObject('dsproject').id).then(function(project) {})
+                    },
+                    function(e) {
+                        var offlinePopup = $ionicPopup.alert({
+                            title: "Unexpected error",
+                            template: "<center>An unexpected error occurred while trying to add a defect</center>",
+                            content: "",
+                            buttons: [{
+                                text: 'Ok',
+                                type: 'button-positive',
+                                onTap: function(e) {
+                                    offlinePopup.close();
+                                }
+                            }]
+                        });
+                    })
+            })
         }
 
         if ($stateParams.id === "0") {

@@ -26,21 +26,21 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
 
         $indexedDB.openStore('projects', function(store) {
             store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                angular.forEach(res.value.subcontractors, function(subcontr) {
+                angular.forEach(res.subcontractors, function(subcontr) {
                     if (subcontr.id == $scope.local.data.id) {
                         $scope.local.list = subcontr.related;
                         $scope.local.loaded = true;
                         $scope.local.poplist = [];
 
-                        for (var i = 0; i < res.value.defects.length; i++) {
+                        for (var i = 0; i < res.defects.length; i++) {
                             var sw = true;
                             for (var j = 0; j < subcontr.related.length; j++) {
-                                if (res.value.defects[i].id === subcontr.related[j].id) {
+                                if (res.defects[i].id === subcontr.related[j].id) {
                                     sw = false;
                                 }
                             }
                             if (sw) {
-                                $scope.local.poplist.push(res.value.defects[i]);
+                                $scope.local.poplist.push(res.defects[i]);
                             }
                         }
                     }
@@ -80,28 +80,59 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
 
         $scope.addRelated = function(related) { //TODO:
             $scope.modal.hide();
-            DefectsService.get(related.id).then(function(defect) {
-                defect.assignee_id = $stateParams.id;
-                DefectsService.update(defect).then(function(result) {
-                    SubcontractorsService.list_defects($scope.settings.project.id, $scope.local.data.id).then(function(result) {
-                        $scope.local.list = result;
-                        var defects = angular.copy($scope.local.poplist)
+            $indexedDB.openStore('projects', function(store) {
+                store.find($scope.settings.project.id).then(function(project) {
+                    angular.forEach(project.subcontractors, function(subcontr) {
+                        if (subcontr.id == $scope.local.data.id) {
+                            angular.forEach(project.defects, function(defect) {
+                                if (defect.id == related.id) {
+                                    defect.assignee_id = $stateParams.id;
+                                    subcontr.related.push(defect);
+                                    saveChanges(project); //DefectsService.update(defect).then(function(result)
+                                    $scope.local.list = subcontr.related;
+                                    var defects = angular.copy($scope.local.poplist)
 
-                        $scope.local.poplist = [];
-                        for (var i = 0; i < defects.length; i++) {
-                            var sw = true;
-                            for (var j = 0; j < result.length; j++) {
-                                if (defects[i].id === result[j].id) {
-                                    sw = false;
+                                    $scope.local.poplist = [];
+                                    for (var i = 0; i < defects.length; i++) {
+                                        var sw = true;
+                                        for (var j = 0; j < subcontr.length; j++) {
+                                            if (defects[i].id === result[j].id) {
+                                                sw = false;
+                                            }
+                                        }
+                                        if (sw) {
+                                            $scope.local.poplist.push(defects[i]);
+                                        }
+                                    }
+                                    $scope.local.loaded = true;
                                 }
-                            }
-                            if (sw) {
-                                $scope.local.poplist.push(defects[i]);
-                            }
+                            })
                         }
-                        $scope.local.loaded = true;
-                    });
+                    })
                 })
+            })
+        }
+
+        function saveChanges(project) {
+            $indexedDB.openStore('projects', function(store) {
+                store.upsert(project).then(
+                    function(e) {
+                        store.find(localStorage.getObject('dsproject').id).then(function(project) {})
+                    },
+                    function(e) {
+                        var offlinePopup = $ionicPopup.alert({
+                            title: "Unexpected error",
+                            template: "<center>An unexpected error occurred while trying to add a defect</center>",
+                            content: "",
+                            buttons: [{
+                                text: 'Ok',
+                                type: 'button-positive',
+                                onTap: function(e) {
+                                    offlinePopup.close();
+                                }
+                            }]
+                        });
+                    })
             })
         }
     }

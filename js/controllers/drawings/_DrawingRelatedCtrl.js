@@ -24,7 +24,7 @@ angular.module($APP.name).controller('_DrawingRelatedCtrl', [
 
         $indexedDB.openStore('projects', function(store) {
             store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                angular.forEach(res.value.drawings, function(drawing) {
+                angular.forEach(res.drawings, function(drawing) {
                     if (drawing.id == $stateParams.id) {
                         $scope.local.list = drawing.relatedDefects;
                         $scope.local.loaded = true;

@@ -5,23 +5,23 @@ angular.module($APP.name).factory('DownloadsService', [
     '$cordovaFile',
     '$cordovaFileTransfer',
     '$q',
-    function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer, $q) {
+    'DrawingsService',
+    function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer, $q, DrawingsService) {
         return {
-            downloadPdf: function(dir, base64String) {
+            downloadPdf: function(drawing, dir) { //TODO: check if ok
                 var def = $q.defer();
                 return $ionicPlatform.ready(function() {
                     if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
-                        //TODO: check space in directory; check needed space; download if enough
                         document.addEventListener(
                             "deviceready",
                             function() {
                                 var fileTransfer = new FileTransfer();
-                                var uri = encodeURI($APP.server + '/pub/drawings/' + base64String);
-                                var fileURL = dir + "/" + base64String;
+                                var uri = encodeURI($APP.server + '/pub/drawings/' + drawing.base64String);
+                                var fileURL = dir + "/" + drawing.base64String;
                                 console.log("file path: " + fileURL);
-
                                 var deviceSpace = 0,
                                     fileSize = 0;
+
                                 cordova.exec(
                                     function(freeSpace) {
                                         deviceSpace = freeSpace;
@@ -29,24 +29,14 @@ angular.module($APP.name).factory('DownloadsService', [
                                     function() {},
                                     "File", "getFreeDiskSpace", []);
 
-                                //TODO: check the size of the file to be downloaded
-                                // window.resolveLocalFileSystemURI(
-                                //     uri,
-                                //     function(fileEntry) {
-                                //         fileEntry.file(function(fileObj) {
-                                //                 console.log("Size = " + fileObj.size);
-                                //                 fileSize = fileObj.size;
-                                //             },
-                                //             function(error) {});
-                                //     },
-                                //     function(error) {}
-                                // );
+                                DrawingsService.get_pdf_size(drawing.id).then(function(res) {
+                                    fileSize = res;
+                                })
 
                                 if (fileSize > deviceSpace - 500) {
                                     def.resolve("");
                                     return;
                                 }
-
                                 fileTransfer.download(
                                     uri,
                                     fileURL,

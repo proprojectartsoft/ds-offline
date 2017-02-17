@@ -19,7 +19,7 @@ angular.module($APP.name).controller('ProjectsCtrl', [
         $indexedDB.openStore('projects', function(store) {
             store.getAll().then(function(res) {
                 angular.forEach(res, function(proj) {
-                    $rootScope.projects.push(proj.value);
+                    $rootScope.projects.push(proj);
                 })
 
                 console.log($rootScope.projects); //TODO:delete comment

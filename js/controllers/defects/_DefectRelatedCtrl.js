@@ -37,7 +37,7 @@ angular.module($APP.name).controller('_DefectRelatedCtrl', [
 
         $indexedDB.openStore('projects', function(store){
           store.find($scope.settings.project.id).then(function(result){
-            $scope.local.poplist = result.value.defects;
+            $scope.local.poplist = result.defects;
           })
         })
 

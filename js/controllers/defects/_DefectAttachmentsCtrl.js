@@ -25,7 +25,7 @@ angular.module($APP.name).controller('_DefectAttachmentsCtrl', [
 
         $indexedDB.openStore('projects', function(store) {
             store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                angular.forEach(res.value.defects, function(defect) {
+                angular.forEach(res.defects, function(defect) {
                     if (defect.id == $stateParams.id) {
                         $scope.local.loaded = true;
                         $scope.local.list = []

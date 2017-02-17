@@ -7,12 +7,13 @@ angular.module($APP.name).factory('SyncService', [
     '$timeout',
     '$ionicPopup',
     '$ionicPlatform',
+    'orderByFilter',
     'ProjectService',
     'DrawingsService',
     'SubcontractorsService',
     'DefectsService',
     'DownloadsService',
-    function($q, $http, $rootScope, $indexedDB, $state, $timeout, $ionicPopup, $ionicPlatform, ProjectService, DrawingsService, SubcontractorsService, DefectsService, DownloadsService) {
+    function($q, $http, $rootScope, $indexedDB, $state, $timeout, $ionicPopup, $ionicPlatform, orderBy, ProjectService, DrawingsService, SubcontractorsService, DefectsService, DownloadsService) {
         return {
             sync: function() {
                 $timeout(function() {
@@ -76,35 +77,52 @@ angular.module($APP.name).factory('SyncService', [
                             })
                         }
 
-                        function createDrawings(project, doDownload, path, def) {
-                            DrawingsService.list(project.id).then(function(drawings) {
-                                project.drawings = drawings;
-                                angular.forEach(project.drawings, function(draw) {
-                                    DrawingsService.list_defects(draw.id).then(function(result) {
-                                        draw.relatedDefects = result;
+                        function createDrawings(drawings, doDownload, path, def) {
+                            angular.forEach(drawings, function(draw) {
+                                DrawingsService.list_defects(draw.draw.id).then(function(result) {
+                                    draw.draw.relatedDefects = result;
+                                })
+                                DrawingsService.get_original(draw.draw.id).then(function(result) {
+                                    if (doDownload) {
+                                        DownloadsService.downloadPdf(result, path).then(function(downloadRes) {
+                                            if (downloadRes == "") {
+                                                failed = true;
+                                                draw.draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
+                                                return;
+                                            }
+                                            draw.draw.pdfPath = downloadRes;
+                                        })
+                                    } else {
+                                        draw.draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
+                                    }
+                                })
+                            })
+                        }
+
+                        function getAllDrawings(projects, doDownload, path, def) {
+                            var draws = [];
+                            angular.forEach(projects, function(project) {
+
+                                DrawingsService.list(project.id).then(function(drawings) {
+                                    project.drawings = drawings;
+                                    angular.forEach(project.drawings, function(draw) {
+                                        draws.push({
+                                            "proj": project,
+                                            "draw": draw
+                                        });
                                     })
-                                    DrawingsService.get_original(draw.id).then(function(result) {
-                                        if (doDownload) {
-                                            DownloadsService.downloadPdf(path, result.base64String).then(function(downloadRes) {
-                                                if (downloadRes == "") {
-                                                    failed = true;
-                                                    draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
-                                                    return;
-                                                }
-                                                draw.pdfPath = downloadRes;
-                                            })
-                                        } else {
-                                            draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
-                                        }
-                                    })
+                                    if (projects[projects.length - 1] === project) {
+                                        var orderedDraws = orderBy(draws, 'draw.drawing_date', true);
+                                        createDrawings(orderedDraws, doDownload, path, def);
+                                    }
                                 })
                             })
                         }
 
                         function createData(doDownload, path, def) {
                             ProjectService.list().then(function(projects) {
+                                getAllDrawings(projects, doDownload, path, def);
                                 angular.forEach(projects, function(project) {
-                                    createDrawings(project, doDownload, path, def);
                                     createSubcontractors(project);
                                     createDefects(project);
                                     ProjectService.users(project.id).then(function(result) {
@@ -147,10 +165,7 @@ angular.module($APP.name).factory('SyncService', [
                                 angular.forEach(projects, function(project) {
                                     $indexedDB.openStore('projects', function(store) {
                                         project.op = 0;
-                                        store.insert({
-                                            "id": project.id,
-                                            "value": project
-                                        }).then(function(e) {
+                                        store.insert(project).then(function(e) {
                                             if (projects[projects.length - 1] === project) {
                                                 syncPopup.close();
                                                 $state.go('app.projects');
