@@ -18,7 +18,6 @@ angular.module($APP.name).factory('DownloadsService', [
                                 var fileTransfer = new FileTransfer();
                                 var uri = encodeURI($APP.server + '/pub/drawings/' + drawing.base64String);
                                 var fileURL = dir + "/" + drawing.base64String;
-                                console.log("file path: " + fileURL);
                                 var deviceSpace = 0;
 
                                 cordova.exec(
@@ -41,9 +40,6 @@ angular.module($APP.name).factory('DownloadsService', [
                                             def.resolve(fileURL);
                                         },
                                         function(error) {
-                                            console.log("download error source " + error.source);
-                                            console.log("download error target " + error.target);
-                                            console.log("upload error code " + error.code);
                                             def.resolve("");
                                         }
                                     );

@@ -21,8 +21,6 @@ angular.module($APP.name).controller('ProjectsCtrl', [
                 angular.forEach(res, function(proj) {
                     $rootScope.projects.push(proj);
                 })
-
-                console.log($rootScope.projects); //TODO:delete comment
                 var aux = localStorage.getObject('dsproject')
                 if (aux) {
                     angular.forEach($rootScope.projects, function(value, key) {
@@ -40,13 +38,11 @@ angular.module($APP.name).controller('ProjectsCtrl', [
             $state.go('app.tab', {
                 page: 'drawings'
             });
-
         }
         $scope.doShow = function() {
             $scope.picModal.hide();
             $scope.picModal.remove();
         };
-
         $scope.showPopup = function() {
             $ionicPopup.show({
                 template: '',

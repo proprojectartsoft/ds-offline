@@ -28,14 +28,102 @@ angular.module($APP.name).factory('SyncService', [
                             buttons: []
                         });
 
+                        function storeNewDefects(project) {
+                            var comments = localStorage.getObject('commentsToAdd') || [];
+                            var related = localStorage.getObject('defectRelToAdd') || [];
+                            var attach = localStorage.getObject('attachToAdd') || [];
+                            var defects = localStorage.getObject('defectsToAdd') || [];
+                            var defectsToUpd = localStorage.getObject('defectsToUpd') || [];
+                            angular.forEach(project.defects, function(defect) {
+                                if (typeof defect.isModified != 'undefined' || typeof defect.isNew != 'undefined') {
+                                    angular.forEach(defect.comments, function(comment) {
+                                        if (typeof comment.isNew != 'undefined') {
+                                            delete comment.isNew;
+                                            comments.push(comment);
+                                        }
+                                    })
+                                    // TODO:
+                                    // angular.forEach(defect.attachements, function(att) {
+                                    // if (typeof att.isNew != 'undefined') {
+                                    // delete att.isNew
+                                    // attach.push(att);
+                                    // }
+                                    // })
+                                }
+                                if (typeof defect.isNew != 'undefined') {
+                                    delete defect.isNew;
+                                    defects.push(defect);
+                                }
+                                if (typeof defect.isModified != 'undefined') {
+                                    delete defect.isModified;
+                                    defectsToUpd.push(defect.completeInfo);
+                                }
+                                delete defect.isNew;
+                                delete defect.isModified;
+                            })
+
+                            localStorage.setObject('commentsToAdd', comments);
+                            localStorage.setObject('defectRelToAdd', related);
+                            localStorage.setObject('attachToAdd', attach);
+                            localStorage.setObject('defectsToAdd', defects);
+                            localStorage.setObject('defectsToUpd', defectsToUpd);
+                        }
+
+                        function storeNewSubcontractors(project) {
+                            var related = localStorage.getObject('defectsToUpd') || [];
+                            angular.forEach(project.subcontractors, function(subcontr) {
+                                if (typeof subcontr.isModified != 'undefined') {
+                                    angular.forEach(subcontr.related, function(rel) {
+                                        if (typeof rel.isNew != 'undefined') {
+                                            delete rel.isNew;
+                                            related.push(rel.completeInfo);
+                                        }
+                                    })
+                                    delete subcontr.isModified;
+                                }
+                            })
+                            localStorage.setObject('defectsToUpd', related);
+                        }
+
                         function syncData() {
                             var def = $q.defer();
                             $indexedDB.openStore('projects', function(store) {
                                 store.getAll().then(function(projects) {
                                     if (projects.length != 0) {
-
-                                        //TODO: save each new pdf to server: DrawingsService.storeNewPdf
-                                        def.resolve();
+                                        angular.forEach(projects, function(project) {
+                                            if (project.isModified) {
+                                                storeNewDefects(project);
+                                                storeNewSubcontractors(project);
+                                                delete project.isModified;
+                                            }
+                                        })
+                                        angular.forEach(localStorage.getObject('commentsToAdd'), function(comment) {
+                                            DefectsService.create_comment(comment).then(function(res) {
+                                                localStorage.setObject('commentsToAdd', []);
+                                            })
+                                        })
+                                        // TODO:
+                                        // angular.forEach(localStorage.getObject('attachToAdd'), function(attach) {
+                                        // DefectsService.create_photos(attach);
+                                        // localStorage.setObject('attachToAdd', []);
+                                        // })
+                                        if (localStorage.getObject('defectsToAdd').length == 0)
+                                            def.resolve();
+                                        angular.forEach(localStorage.getObject('defectsToAdd'), function(defect) {
+                                            var draw = defect.draw;
+                                            DefectsService.create(defect.completeInfo).then(function(res) {
+                                                DrawingsService.update(draw).then(function(drawingupdate) {
+                                                    def.resolve();
+                                                });
+                                            })
+                                            localStorage.setObject('defectsToAdd', []);
+                                        })
+                                        //check if update new added defect
+                                        angular.forEach(localStorage.getObject('defectsToUpd'), function(defect) {
+                                            DefectsService.update(defect).then(function(res) {
+                                                localStorage.setObject('defectsToUpd', []);
+                                            })
+                                        })
                                     } else {
                                         def.resolve();
                                     }
@@ -52,7 +140,7 @@ angular.module($APP.name).factory('SyncService', [
                                         defect.completeInfo = result;
                                         angular.forEach(project.drawings, function(draw) {
                                             if (defect.completeInfo.drawing != null && draw.id == defect.completeInfo.drawing.id) {
-                                                defect.completeInfo.drawing = draw;
+                                                defect.completeInfo.drawing.pdfPath = draw.pdfPath;
                                             }
                                         })
                                     })
@@ -83,6 +171,7 @@ angular.module($APP.name).factory('SyncService', [
                                     draw.draw.relatedDefects = result;
                                 })
                                 DrawingsService.get_original(draw.draw.id).then(function(result) {
+                                    draw.draw.base64String = result.base64String;
                                     if (doDownload) {
                                         DownloadsService.downloadPdf(result, path).then(function(downloadRes) {
                                             if (downloadRes == "") {
@@ -188,6 +277,7 @@ angular.module($APP.name).factory('SyncService', [
                                         type: 'button-positive',
                                         onTap: function(e) {
                                             downloadPopup.close();
+                                            //TODO: allow clicks
                                         }
                                     }]
                                 });

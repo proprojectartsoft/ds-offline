@@ -122,7 +122,6 @@ angular.module($APP.name).controller('DrawingsCtrl', [
             $state.go('app.tab')
         }
         $scope.go = function(predicate, item) {
-            console.log(predicate, item);
             $state.go('app.' + predicate, {
                 id: item
             });

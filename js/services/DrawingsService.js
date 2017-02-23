@@ -70,7 +70,6 @@ angular.module($APP.name).factory('DrawingsService', [
                 );
             },
             create: function(dataIn, file) {
-                console.log(dataIn)
                 return $http({
                     method: 'POST',
                     url: $APP.server + '/api/drawing/uploadfile',
@@ -135,7 +134,6 @@ angular.module($APP.name).factory('DrawingsService', [
             },
             uploadFile: function(files) {
                 var fd = new FormData();
-                console.log(files)
                 fd.append("file", files[0]);
 
                 $http.post($APP.server + '/api/drawing/uploadfile', fd, {
@@ -182,7 +180,6 @@ angular.module($APP.name).factory('DrawingsService', [
                 );
             },
             delete_photos: function(dataIn) {
-                console.log(dataIn)
                 return $http({
                     method: 'DELETE',
                     url: $APP.server + 'api/defectphoto',
@@ -194,7 +191,6 @@ angular.module($APP.name).factory('DrawingsService', [
                 );
             },
             create_comment: function(dataIn) {
-                console.log(dataIn)
                 return $http({
                     method: 'POST',
                     url: $APP.server + '/api/defectcomment',
@@ -213,7 +209,6 @@ angular.module($APP.name).factory('DrawingsService', [
                 );
             },
             create_photos: function(dataIn) {
-                console.log(dataIn)
                 return $http({
                     method: 'POST',
                     url: $APP.server + 'api/defectphoto/uploadfiles',
@@ -271,7 +266,6 @@ angular.module($APP.name).factory('DrawingsService', [
 angular.module($APP.name).service('fileUpload', ['$http', function($http) {
     this.uploadFileToUrl = function(file, uploadUrl) {
         var fd = new FormData();
-        console.log(file, uploadUrl)
         fd.append('file', file);
 
         $http.post(uploadUrl, fd, {

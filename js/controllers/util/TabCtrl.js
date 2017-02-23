@@ -33,7 +33,6 @@ angular.module($APP.name).controller('TabCtrl', [
             return localStorage.getItem('ds.reloadevent')
         }, function(value) {
             if (value) {
-                console.log(value);
                 if (!$scope.settings.tabActive) {
                     $scope.tabSelect('drawings');
                 } else {
@@ -145,11 +144,8 @@ angular.module($APP.name).controller('TabCtrl', [
                         }
                     }]
                 }).then(function(res) {
-                    console.log($rootScope);
                     if (res !== 'close') {
-                        console.log('Tapped!', res);
                         SubcontractorsService.invite(res).then(function(result) {
-                            console.log(result);
                         })
                     }
                 }, function(err) {

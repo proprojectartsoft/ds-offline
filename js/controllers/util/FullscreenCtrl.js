@@ -5,9 +5,10 @@ angular.module($APP.name).controller('FullscreenCtrl', [
     '$state',
     'SettingsService',
     '$timeout',
+    '$indexedDB',
     'DrawingsService',
     '$ionicScrollDelegate',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, DrawingsService, $ionicScrollDelegate) { //   $scope.settings = {tabs:$rootScope.settings.tabs,tabActive:$rootScope.settings.tabActive};
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, DrawingsService, $ionicScrollDelegate) { //   $scope.settings = {tabs:$rootScope.settings.tabs,tabActive:$rootScope.settings.tabActive};
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.subHeader = SettingsService.get_settings('subHeader');
@@ -150,7 +151,7 @@ angular.module($APP.name).controller('FullscreenCtrl', [
                                     } else {
                                         var aux = {
                                             id: $scope.local.data.id,
-                                            path: $scope.local.data.base64String,
+                                            path: $scope.local.data.pdfPath,
                                             base64String: $scope.local.data.base64String,
                                             markers: [newMarker]
                                         }
@@ -179,7 +180,7 @@ angular.module($APP.name).controller('FullscreenCtrl', [
                                     } else {
                                         var aux = {
                                             id: $scope.local.data.id,
-                                            path: $scope.local.data.base64String,
+                                            path: $scope.local.data.pdfPath,
                                             base64String: $scope.local.data.base64String,
                                             markers: [newMarker]
                                         }
@@ -189,11 +190,9 @@ angular.module($APP.name).controller('FullscreenCtrl', [
                                         })
                                     }
                                     renderPoints(index);
-
                                 }
                             }
                         }
-
                         var renderContext = {
                             canvasContext: context,
                             viewport: usedViewport
@@ -254,8 +253,7 @@ angular.module($APP.name).controller('FullscreenCtrl', [
             if ($scope.local.data.markers && $scope.local.data.markers.length && $scope.local.data.markers[0].id) {
                 $scope.local.disableAddMarker = true;
             }
-            console.log($scope.local.data.pdfPath);
-            setPdf($scope.local.data.path)//TODO:check
+            setPdf($scope.local.data.path);
         } else {
             $scope.local.singleMarker = false;
             if (!localStorage.getObject('dsdrwact') || localStorage.getObject('dsdrwact').id !== parseInt($stateParams.id)) {

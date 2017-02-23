@@ -40,12 +40,16 @@ angular.module($APP.name).controller('_DefectCommentsCtrl', [
                                     "text": $scope.local.comment,
                                     "user_id": user.id,
                                     "user_name": user.first_name + " " + user.last_name,
-                                    "defect_id": $stateParams.id
+                                    "defect_id": $stateParams.id,
+                                    "date": Date.now()
                                 };
                             }
                         })
                         angular.forEach(project.defects, function(defect) {
                             if (defect.id == $stateParams.id) {
+                                request.isNew = true;   //TODO:
+                                defect.isModified = true;
+                                project.isModified = true;
                                 defect.comments.push(request);
                                 $scope.local.comment = '';
                                 $scope.local.list = defect.comments;

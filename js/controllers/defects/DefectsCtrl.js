@@ -5,6 +5,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
     '$state',
     'SettingsService',
     '$timeout',
+    '$filter',
     'DefectsService',
     'ConvertersService',
     '$ionicViewSwitcher',
@@ -12,7 +13,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
     '$indexedDB',
     'DrawingsService',
     '$ionicPopup',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, DefectsService, ConvertersService, $ionicViewSwitcher, $ionicModal, $indexedDB, DrawingsService, $ionicPopup) {
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $filter, DefectsService, ConvertersService, $ionicViewSwitcher, $ionicModal, $indexedDB, DrawingsService, $ionicPopup) {
         $scope.settings = {};
         $scope.settings.subHeader = SettingsService.get_settings('subHeader');
         $scope.settings.tabActive = SettingsService.get_settings('tabActive');
@@ -112,7 +113,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
             }
         }
 
-        function newDefect() { //TODO:
+        function newDefect() {
             $rootScope.disableedit = false;
             $rootScope.thiscreate = true;
             if (localStorage.getObject('ds.drawing.defect') && !localStorage.getObject('ds.defect.drawing')) {
@@ -145,7 +146,17 @@ angular.module($APP.name).controller('DefectsCtrl', [
                     id: 0,
                     name: 'None'
                 };
-                localStorage.setObject('ds.defect.new.data', $scope.local.data)
+                $indexedDB.openStore('projects', function(store) {
+                    store.find(localStorage.getObject('dsproject').id).then(function(project) {
+                        angular.forEach(project.users, function(user) {
+                            if (user.login_name == localStorage.getObject('ds.user').name) {
+                                $scope.local.data.assignee_name = user.first_name + " " + user.last_name;
+                                $scope.local.data.assignee_id = user.id;
+                                localStorage.setObject('ds.defect.new.data', $scope.local.data);
+                            }
+                        })
+                    })
+                })
             } else {
                 $scope.local.data = localStorage.getObject('ds.defect.new.data');
             }
@@ -202,68 +213,133 @@ angular.module($APP.name).controller('DefectsCtrl', [
             localStorage.removeItem('ds.defect.backup')
             $rootScope.disableedit = true;
         }
+
         $scope.saveEdit = function() {
             $rootScope.disableedit = true;
-            DefectsService.update(ConvertersService.save_defect($scope.local.data)).then(function(result) {
-                localStorage.setObject('ds.defect.active.data', $scope.local.data)
-                localStorage.removeItem('ds.defect.backup')
-                localStorage.setObject('ds.reloadevent', {
-                    value: true
-                });
+            $indexedDB.openStore("projects", function(store) {
+                store.find(localStorage.getObject('dsproject').id).then(function(project) {
+                    angular.forEach(project.defects, function(defect) {
+                        if (defect.id == $scope.local.data.id) {
+                            var old_assignee_id = defect.completeInfo.assignee_id;
+                            defect.completeInfo = ConvertersService.save_defect($scope.local.data);
+                            defect.status_name = defect.completeInfo.status_name;
+                            defect.priority_name = defect.completeInfo.priority_name;
+                            defect.severity_name = defect.completeInfo.severity_name;
+                            defect.title = defect.completeInfo.title;
+                            defect.isModified = true;
+                            project.isModified = true;
+                            //TODO: set to defect the new assignee_id
+                            angular.forEach(project.drawings, function(draw) {
+                                if (draw.id == defect.completeInfo.drawing.id) {
+                                    angular.forEach(draw.markers, function(mark) {
+                                        if (mark.defect_id == defect.id) {
+                                            mark.status = defect.completeInfo.drawing.markers[0].status;
+                                        }
+                                    })
+                                }
+                            })
+                            //assignee changes
+                            if (old_assignee_id != defect.completeInfo.assignee_id) {
+                                angular.forEach(project.subcontractors, function(subcontr) {
+                                    //remove from old assignee related list
+                                    if (subcontr.id == old_assignee_id) {
+                                        angular.forEach(subcontr.related, function(rel) {
+                                            if (rel.id == defect.id) {
+                                                // angular.arrayRemove(subcontr.related, rel);
+
+                                                // var y = _.without(subcontr.related, rel);
+
+                                                // subcontr.related.splice(rel, 1);
+                                                subcontr.related = $filter('filter')(subcontr.related , { id: ('!' + rel.id) });
+                                                // rel = null;
+                                            }
+                                        })
+                                    }
+                                    //add to new assignee related list
+                                    else if (subcontr.id == defect.completeInfo.assignee_id) {
+                                        subcontr.related.push(defect.completeInfo);
+                                    }
+                                })
+                            }
+                        }
+                    })
+                    saveChanges(project);
+                    localStorage.setObject('ds.defect.active.data', $scope.local.data)
+                    localStorage.removeItem('ds.defect.backup')
+                    localStorage.setObject('ds.reloadevent', {
+                        value: true
+                    });
+                })
             })
         }
         $scope.saveCreate = function() { //TODO:
             if ($scope.local.drawing && $scope.local.drawing.markers && $scope.local.drawing.markers.length && $scope.local.data.title) {
                 $rootScope.disableedit = true;
-
+                var nextId = 0;
                 $indexedDB.openStore("projects", function(store) {
-                    store.find(localStorage.getObject('dsproject'.id)).then(function(project) {
+                    store.getAll().then(function(res) {
+                        angular.forEach(res, function(proj) {
+                            angular.forEach(proj.defects, function(defect) {
+                                if (defect.id > nextId)
+                                    nextId = defect.id;
+                            })
+                        })
+                    })
+                })
+                $indexedDB.openStore("projects", function(store) {
+                    store.find(localStorage.getObject('dsproject').id).then(function(project) {
                         var newDef = ConvertersService.save_defect($scope.local.data);
-                        project.defects.push(newDef);
-                        saveChanges(project);
+                        newDef.id = nextId + 1;
+                        var localStorredDef = {};
+                        localStorredDef.isNew = true;
+                        localStorredDef.assignee_name = newDef.assignee_name;
+                        localStorredDef.attachements = [];
+                        localStorredDef.comments = [];
+                        localStorredDef.id = newDef.id;
+                        localStorredDef.priority_name = newDef.priority_name;
+                        localStorredDef.severity_name = newDef.severity_name;
+                        localStorredDef.status_name = newDef.status_name;
+                        localStorredDef.title = newDef.title;
+                        localStorredDef.completeInfo = newDef;
+                        //TODO: add attachements and comments
+
+
+
+
+
+                        angular.forEach(project.subcontractors, function(subcontr) {
+                            if (subcontr.id == newDef.assignee_id) {
+                                subcontr.related.push(newDef);
+                            }
+                        })
 
                         localStorage.setObject('ds.defect.active.data', $scope.local.data);
                         localStorage.removeItem('ds.defect.backup');
-                        forEach(project.drawings, function(drawing) {
+                        angular.forEach(project.drawings, function(drawing) {
                             if (drawing.id == $scope.local.drawing.id) {
                                 var aux = angular.copy($scope.local.drawing.markers[0])
-                                aux.defect_id = newDef.id; //result;
+                                aux.defect_id = nextId + 1;
                                 aux.drawing_id = $scope.local.drawing.id;
                                 aux.position_x = aux.xInit;
                                 aux.position_y = aux.yInit;
-                                drawing.markers.push(aux)
-                                DrawingsService.update(drawing).then(function(drawingupdate) {
-                                    localStorage.removeItem('dsdrwact');
-                                    localStorage.setObject('ds.reloadevent', {
-                                        value: true
-                                    });
-                                    $scope.back();
+                                drawing.markers.push(aux);
+                                aux.status = localStorredDef.status_name;
+                                localStorredDef.draw = drawing;
+                                localStorredDef.completeInfo.drawing = ConvertersService.save_local(drawing);
+                                localStorredDef.completeInfo.drawing.markers.push(aux);
+                                project.defects.push(localStorredDef);
+                                project.isModified = true;
+                                saveChanges(project);
+
+                                localStorage.removeItem('dsdrwact');
+                                localStorage.setObject('ds.reloadevent', {
+                                    value: true
                                 });
+                                $scope.back();
                             }
                         })
                     })
                 })
-
-
-                // DefectsService.create(ConvertersService.save_defect($scope.local.data)).then(function(result) {
-                //     localStorage.setObject('ds.defect.active.data', $scope.local.data)
-                //     localStorage.removeItem('ds.defect.backup')
-                //     DrawingsService.get_original($scope.local.drawing.id).then(function(drawing) {
-                //         var aux = angular.copy($scope.local.drawing.markers[0])
-                //         aux.defect_id = result;
-                //         aux.drawing_id = $scope.local.drawing.id;
-                //         aux.position_x = aux.xInit;
-                //         aux.position_y = aux.yInit;
-                //         drawing.markers.push(aux)
-                //         DrawingsService.update(drawing).then(function(drawingupdate) {
-                //             localStorage.removeItem('dsdrwact');
-                //             localStorage.setObject('ds.reloadevent', {
-                //                 value: true
-                //             });
-                //             $scope.back();
-                //         });
-                //     })
-                // })
             } else {
                 var alertPopup = $ionicPopup.show({
                     title: 'Error',
@@ -274,7 +350,6 @@ angular.module($APP.name).controller('DefectsCtrl', [
                 });
 
                 alertPopup.then(function(res) {
-                    console.log('Thank you for not eating my delicious ice cream cone');
                 });
             }
         }

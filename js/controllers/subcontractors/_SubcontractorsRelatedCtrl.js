@@ -22,7 +22,6 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
         $scope.local.entityId = $stateParams.id;
         $scope.local.loaded = false;
         $scope.settings.subHeader = 'Subcontractor - ' + $scope.local.data.last_name + ' ' + $scope.local.data.first_name;
-        console.log($scope.settings.project);
 
         $indexedDB.openStore('projects', function(store) {
             store.find(localStorage.getObject('dsproject').id).then(function(res) {
@@ -78,7 +77,7 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
             $scope.modal.show();
         };
 
-        $scope.addRelated = function(related) { //TODO:
+        $scope.addRelated = function(related) {
             $scope.modal.hide();
             $indexedDB.openStore('projects', function(store) {
                 store.find($scope.settings.project.id).then(function(project) {
@@ -87,8 +86,17 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
                             angular.forEach(project.defects, function(defect) {
                                 if (defect.id == related.id) {
                                     defect.assignee_id = $stateParams.id;
+                                    angular.forEach(project.subcontractors, function(sub) {
+                                      if(sub.id == $stateParams.id){
+                                        defect.assignee_name = sub.first_name + " " + sub.last_name;
+                                      }
+                                    })
+                                    defect.completeInfo.assignee_id = $stateParams.id;
+                                    defect.isNew = true;
+                                    subcontr.isModified = true;
+                                    project.isModified = true;
                                     subcontr.related.push(defect);
-                                    saveChanges(project); //DefectsService.update(defect).then(function(result)
+                                    saveChanges(project);
                                     $scope.local.list = subcontr.related;
                                     var defects = angular.copy($scope.local.poplist)
 

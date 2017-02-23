@@ -34,7 +34,6 @@ angular.module($APP.name).controller('_DrawingRelatedCtrl', [
         })
 
         $scope.goItem = function(item) {
-            console.log('this is the item:', item);
             $scope.settings.subHeader = item.name;
             SettingsService.set_settings($scope.settings)
             $state.go('app.defects', {

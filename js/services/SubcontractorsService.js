@@ -31,7 +31,6 @@ angular.module($APP.name).factory('SubcontractorsService', [
                 );
             },
             create: function (dataIn) {
-                console.log(dataIn)
                 return $http({
                     method: 'POST',
                     url: $APP.server + '/api/subcontractor',
@@ -44,7 +43,6 @@ angular.module($APP.name).factory('SubcontractorsService', [
                 );
             },
             invite: function (dataIn) {
-                console.log(dataIn)
                 var email = 'a@a'
                 var projectId = 1
                 var aux = {
@@ -84,7 +82,6 @@ angular.module($APP.name).factory('SubcontractorsService', [
                 );
             },
             create_comment: function (dataIn) {
-                console.log(dataIn)
                 return $http({
                     method: 'POST',
                     url: $APP.server + '/api/subcontractor/comments',
@@ -104,7 +101,6 @@ angular.module($APP.name).factory('SubcontractorsService', [
                 );
             },
             signup: function (dataIn) {
-                console.log(dataIn)
                 return $http({
                     method: 'POST',
                     url: $APP.server + '/pub/signup/subcontractor',
