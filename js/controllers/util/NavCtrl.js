@@ -58,4 +58,3 @@ angular.module($APP.name).controller('NavCtrl', [
         })
     }
 ]);
-s
