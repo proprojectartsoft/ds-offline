@@ -107,7 +107,7 @@ angular.module($APP.name).factory('SyncService', [
                                         // DefectsService.create_photos(attach);
                                         // localStorage.setObject('attachToAdd', []);
                                         // })
-                                        if (localStorage.getObject('defectsToAdd').length == 0) {
+                                        if (localStorage.getObject('defectsToAdd') == null || localStorage.getObject('defectsToAdd').length == 0) {
                                             def.resolve();
                                         }
 
