@@ -92,6 +92,10 @@ angular.module($APP.name).controller('DefectsCtrl', [
         };
         var modalDrawing = function() { //TODO:
             DrawingsService.list_light($scope.settings.project.id).then(function(result) {
+                angular.forEach(result, function(draw) {
+                    draw.path = $APP.server + '/pub/drawings/' + draw.path;
+                    draw.resized_path = $APP.server + '/pub/drawings/' + draw.resized_path;
+                })
                 $scope.local.drawingsLight = result;
             })
             $scope.modal.show();
@@ -226,9 +230,10 @@ angular.module($APP.name).controller('DefectsCtrl', [
                             defect.priority_name = defect.completeInfo.priority_name;
                             defect.severity_name = defect.completeInfo.severity_name;
                             defect.title = defect.completeInfo.title;
-                            defect.isModified = true;
+                            if (typeof defect.isNew == 'undefined')
+                                defect.isModified = true;
                             project.isModified = true;
-                            //TODO: set to defect the new assignee_id
+
                             angular.forEach(project.drawings, function(draw) {
                                 if (draw.id == defect.completeInfo.drawing.id) {
                                     angular.forEach(draw.markers, function(mark) {
@@ -245,13 +250,9 @@ angular.module($APP.name).controller('DefectsCtrl', [
                                     if (subcontr.id == old_assignee_id) {
                                         angular.forEach(subcontr.related, function(rel) {
                                             if (rel.id == defect.id) {
-                                                // angular.arrayRemove(subcontr.related, rel);
-
-                                                // var y = _.without(subcontr.related, rel);
-
-                                                // subcontr.related.splice(rel, 1);
-                                                subcontr.related = $filter('filter')(subcontr.related , { id: ('!' + rel.id) });
-                                                // rel = null;
+                                                subcontr.related = $filter('filter')(subcontr.related, {
+                                                    id: ('!' + rel.id)
+                                                });
                                             }
                                         })
                                     }
@@ -349,8 +350,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                     }]
                 });
 
-                alertPopup.then(function(res) {
-                });
+                alertPopup.then(function(res) {});
             }
         }
 
@@ -363,7 +363,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                     function(e) {
                         var offlinePopup = $ionicPopup.alert({
                             title: "Unexpected error",
-                            template: "<center>An unexpected error occurred while trying to add a defect</center>",
+                            template: "<center>An unexpected error has occurred.</center>",
                             content: "",
                             buttons: [{
                                 text: 'Ok',

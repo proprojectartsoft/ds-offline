@@ -253,7 +253,7 @@ angular.module($APP.name).controller('FullscreenCtrl', [
             if ($scope.local.data.markers && $scope.local.data.markers.length && $scope.local.data.markers[0].id) {
                 $scope.local.disableAddMarker = true;
             }
-            setPdf($scope.local.data.path);
+            setPdf($scope.local.data.pah);
         } else {
             $scope.local.singleMarker = false;
             if (!localStorage.getObject('dsdrwact') || localStorage.getObject('dsdrwact').id !== parseInt($stateParams.id)) {

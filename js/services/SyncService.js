@@ -20,7 +20,7 @@ angular.module($APP.name).factory('SyncService', [
                     var deferred = $q.defer();
                     var failed = false;
 
-                    if (navigator.onLine) {
+                    if (navigator.connection.type != Connection.NONE && navigator.connection.type != Connection.UNKNOWN) {
                         var syncPopup = $ionicPopup.alert({
                             title: "Syncing",
                             template: "<center><ion-spinner icon='android'></ion-spinner></center>",
@@ -107,18 +107,20 @@ angular.module($APP.name).factory('SyncService', [
                                         // DefectsService.create_photos(attach);
                                         // localStorage.setObject('attachToAdd', []);
                                         // })
-                                        if (localStorage.getObject('defectsToAdd').length == 0)
+                                        if (localStorage.getObject('defectsToAdd').length == 0) {
                                             def.resolve();
+                                        }
+
                                         angular.forEach(localStorage.getObject('defectsToAdd'), function(defect) {
                                             var draw = defect.draw;
                                             DefectsService.create(defect.completeInfo).then(function(res) {
                                                 DrawingsService.update(draw).then(function(drawingupdate) {
-                                                    def.resolve();
+                                                    if (localStorage.getObject('defectsToAdd')[localStorage.getObject('defectsToAdd').length - 1].id == defect.id)
+                                                        def.resolve();
                                                 });
                                             })
                                             localStorage.setObject('defectsToAdd', []);
                                         })
-                                        //check if update new added defect
                                         angular.forEach(localStorage.getObject('defectsToUpd'), function(defect) {
                                             DefectsService.update(defect).then(function(res) {
                                                 localStorage.setObject('defectsToUpd', []);
@@ -177,21 +179,28 @@ angular.module($APP.name).factory('SyncService', [
                                             if (downloadRes == "") {
                                                 failed = true;
                                                 draw.draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
-                                                return;
+                                                if (drawings[drawings.length - 1] === draw)
+                                                    def.resolve();
+                                                // return;
+                                            } else {
+                                                draw.draw.pdfPath = downloadRes;
+                                                if (drawings[drawings.length - 1] === draw)
+                                                    def.resolve();
                                             }
-                                            draw.draw.pdfPath = downloadRes;
                                         })
                                     } else {
                                         draw.draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
+                                        if (drawings[drawings.length - 1] === draw)
+                                            def.resolve();
                                     }
                                 })
                             })
                         }
 
-                        function getAllDrawings(projects, doDownload, path, def) {
+                        function getAllDrawings(projects, doDownload, path) {
+                            var def = $q.defer();
                             var draws = [];
                             angular.forEach(projects, function(project) {
-
                                 DrawingsService.list(project.id).then(function(drawings) {
                                     project.drawings = drawings;
                                     angular.forEach(project.drawings, function(draw) {
@@ -201,27 +210,33 @@ angular.module($APP.name).factory('SyncService', [
                                         });
                                     })
                                     if (projects[projects.length - 1] === project) {
+                                        if (draws.length == 0) {
+                                            def.resolve();
+                                            return;
+                                        }
                                         var orderedDraws = orderBy(draws, 'draw.drawing_date', true);
                                         createDrawings(orderedDraws, doDownload, path, def);
                                     }
                                 })
                             })
+                            return def.promise;
                         }
 
                         function createData(doDownload, path, def) {
                             ProjectService.list().then(function(projects) {
-                                getAllDrawings(projects, doDownload, path, def);
-                                angular.forEach(projects, function(project) {
-                                    createSubcontractors(project);
-                                    createDefects(project);
-                                    ProjectService.users(project.id).then(function(result) {
-                                        project.users = result;
+                                getAllDrawings(projects, doDownload, path).then(function() {
+                                    angular.forEach(projects, function(project) {
+                                        createSubcontractors(project);
+                                        createDefects(project);
+                                        ProjectService.users(project.id).then(function(result) {
+                                            project.users = result;
+                                        })
+                                        if ((projects[projects.length - 1] === project)) {
+                                            $timeout(function() {
+                                                def.resolve(projects)
+                                            }, 5000);
+                                        }
                                     })
-                                    if ((projects[projects.length - 1] === project)) {
-                                        $timeout(function() {
-                                            def.resolve(projects)
-                                        }, 5000);
-                                    }
                                 })
                             })
                         }
