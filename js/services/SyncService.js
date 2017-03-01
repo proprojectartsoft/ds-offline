@@ -20,7 +20,7 @@ angular.module($APP.name).factory('SyncService', [
                     var deferred = $q.defer();
                     var failed = false;
 
-                    if (navigator.connection.type != Connection.NONE && navigator.connection.type != Connection.UNKNOWN) {
+                    if (typeof navigator.connection == 'undefined' || (navigator.connection.type != Connection.NONE && navigator.connection.type != Connection.UNKNOWN)) {
                         var syncPopup = $ionicPopup.alert({
                             title: "Syncing",
                             template: "<center><ion-spinner icon='android'></ion-spinner></center>",
@@ -73,11 +73,13 @@ angular.module($APP.name).factory('SyncService', [
                             var related = localStorage.getObject('defectsToUpd') || [];
                             angular.forEach(project.subcontractors, function(subcontr) {
                                 if (typeof subcontr.isModified != 'undefined') {
-                                    angular.forEach(subcontr.related, function(rel) {
-                                        if (typeof rel.isNew != 'undefined') {
-                                            delete rel.isNew;
-                                            related.push(rel.completeInfo);
-                                        }
+                                    SubcontractorsService.update(subcontr).then(function(result) {
+                                        angular.forEach(subcontr.related, function(rel) {
+                                            if (typeof rel.isNew != 'undefined') {
+                                                delete rel.isNew;
+                                                related.push(rel.completeInfo);
+                                            }
+                                        })
                                     })
                                     delete subcontr.isModified;
                                 }
@@ -181,7 +183,6 @@ angular.module($APP.name).factory('SyncService', [
                                                 draw.draw.pdfPath = $APP.server + '/pub/drawings/' + result.base64String;
                                                 if (drawings[drawings.length - 1] === draw)
                                                     def.resolve();
-                                                // return;
                                             } else {
                                                 draw.draw.pdfPath = downloadRes;
                                                 if (drawings[drawings.length - 1] === draw)
@@ -208,6 +209,7 @@ angular.module($APP.name).factory('SyncService', [
                                             "proj": project,
                                             "draw": draw
                                         });
+                                        $timeout(function() {}, 100);
                                     })
                                     if (projects[projects.length - 1] === project) {
                                         if (draws.length == 0) {

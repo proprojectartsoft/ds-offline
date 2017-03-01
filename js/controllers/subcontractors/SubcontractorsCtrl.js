@@ -6,7 +6,8 @@ angular.module($APP.name).controller('SubcontractorsCtrl', [
     '$indexedDB',
     'SettingsService',
     'SubcontractorsService',
-    function($rootScope, $scope, $stateParams, $state, $indexedDB, SettingsService, SubcontractorsService) {
+    'ConvertersService',
+    function($rootScope, $scope, $stateParams, $state, $indexedDB, SettingsService, SubcontractorsService, ConvertersService) {
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.tabActive = 'subcontractors'
@@ -48,11 +49,44 @@ angular.module($APP.name).controller('SubcontractorsCtrl', [
         }
         $scope.saveEdit = function() {
             $rootScope.disableedit = true;
-            SubcontractorsService.update($scope.local.data).then(function(result) {
-                localStorage.setObject('dsscact', $scope.local.data)
-                localStorage.setObject('ds.reloadevent', {
-                    value: true
-                });
+            $indexedDB.openStore("projects", function(store) {
+                store.find(localStorage.getObject('dsproject').id).then(function(project) {
+                    angular.forEach(project.subcontractors, function(subcontr) {
+                        if (subcontr.id == $scope.local.data.id) {
+                            ConvertersService.modify_subcontractor(subcontr, $scope.local.data);
+                            subcontr.isModified = true;
+                            project.isModified = true;
+                            saveChanges(project);
+                            localStorage.setObject('dsscact', $scope.local.data)
+                            localStorage.setObject('ds.reloadevent', {
+                                value: true
+                            });
+                        }
+                    })
+                })
+            })
+        }
+
+        function saveChanges(project) {
+            $indexedDB.openStore('projects', function(store) {
+                store.upsert(project).then(
+                    function(e) {
+                        store.find(localStorage.getObject('dsproject').id).then(function(project) {})
+                    },
+                    function(e) {
+                        var offlinePopup = $ionicPopup.alert({
+                            title: "Unexpected error",
+                            template: "<center>An unexpected error has occurred.</center>",
+                            content: "",
+                            buttons: [{
+                                text: 'Ok',
+                                type: 'button-positive',
+                                onTap: function(e) {
+                                    offlinePopup.close();
+                                }
+                            }]
+                        });
+                    })
             })
         }
         $scope.go = function(predicate, item) {

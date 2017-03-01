@@ -53,6 +53,7 @@ angular.module($APP.name).controller('TabCtrl', [
 
 
         $scope.reload = function() {
+          console.log("reload!");
             $scope.settings.loaded = false;
             $scope.list = [];
             switch ($scope.settings.tabActive) {

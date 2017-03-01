@@ -230,6 +230,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                             defect.priority_name = defect.completeInfo.priority_name;
                             defect.severity_name = defect.completeInfo.severity_name;
                             defect.title = defect.completeInfo.title;
+                            defect.due_date = defect.completeInfo.due_date;
                             if (typeof defect.isNew == 'undefined')
                                 defect.isModified = true;
                             project.isModified = true;
@@ -265,6 +266,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         }
                     })
                     saveChanges(project);
+                    // localStorage.setObject('dsproject', project); //TODO: check if ok updated!!
                     localStorage.setObject('ds.defect.active.data', $scope.local.data)
                     localStorage.removeItem('ds.defect.backup')
                     localStorage.setObject('ds.reloadevent', {
@@ -318,6 +320,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         localStorage.removeItem('ds.defect.backup');
                         angular.forEach(project.drawings, function(drawing) {
                             if (drawing.id == $scope.local.drawing.id) {
+                                drawing.nr_of_defects++;
                                 var aux = angular.copy($scope.local.drawing.markers[0])
                                 aux.defect_id = nextId + 1;
                                 aux.drawing_id = $scope.local.drawing.id;
@@ -384,6 +387,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
         }
 
         $scope.back = function() {
+            console.log("back");
             var routeback = localStorage.getObject('ds.defect.back')
             if ($stateParams.id === '0') {
                 localStorage.removeItem('ds.defect.new.data');
@@ -403,6 +407,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
             }
         }
         $scope.go = function(predicate, item) {
+            console.log("go");
             $state.go('app.' + predicate, {
                 id: item
             });

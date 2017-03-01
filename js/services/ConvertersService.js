@@ -6,7 +6,8 @@ function ConvertersService($http) {
     var service = {
         init_defect: init_defect,
         save_defect: save_defect,
-        save_local: save_local
+        save_local: save_local,
+        modify_subcontractor: modify_subcontractor
     }
     return service;
 
@@ -49,7 +50,7 @@ function ConvertersService($http) {
             "drawing_date": drawing.drawing_date,
             "file_name": drawing.file_name,
             "id": drawing.id,
-            "nr_of_defects": drawing.nr_of_defects,
+            "nr_of_defects": drawing.nr_of_defects + 1,
             "pdfPath": drawing.pdfPath,
             "project_id": drawing.project_id,
             "resized_path": drawing.resized_path,
@@ -58,6 +59,15 @@ function ConvertersService($http) {
             "relatedDefects": drawing.relatedDefects,
             "markers": []
         };
+    }
+
+    function modify_subcontractor(subcontr, subcontractor) {
+        subcontr.address = subcontractor.address;
+        subcontr.country = subcontractor.country;
+        subcontr.first_name = subcontractor.first_name;
+        subcontr.last_name = subcontractor.last_name;
+        subcontr.phone_number = subcontractor.phone_number;
+        subcontr.registration_number = subcontractor.registration_number;
     }
 
 };
