@@ -60,7 +60,6 @@ angular.module($APP.name).controller('DefectsCtrl', [
                                     $scope.local.marker.y = $scope.local.drawing.markers[0].position_y * ($scope.perc / 100) - 6;
                                     $scope.local.marker.status = $scope.local.drawing.markers[0].status;
                                 })
-
                             }
                         })
                     });
@@ -90,7 +89,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                 }
             });
         };
-        var modalDrawing = function() { //TODO:
+        var modalDrawing = function() {
             DrawingsService.list_light($scope.settings.project.id).then(function(result) {
                 angular.forEach(result, function(draw) {
                     draw.path = $APP.server + '/pub/drawings/' + draw.path;
@@ -138,6 +137,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                 $scope.local.data.project_id = $scope.settings.project.id;
                 $scope.local.data.defect_id = 0;
                 $scope.local.data.related_tasks = [];
+                $scope.local.data.due_date = "";
                 $scope.local.data.status_obj = {
                     id: 0,
                     name: 'Incomplete'
@@ -174,7 +174,11 @@ angular.module($APP.name).controller('DefectsCtrl', [
                 $rootScope.disableedit = true;
             }
             $rootScope.thiscreate = false;
-            if (!localStorage.getObject('ds.defect.active.data') || localStorage.getObject('ds.defect.active.data').id !== parseInt($stateParams.id)) {
+            var x = localStorage.getObject('ds.defect.active.data');
+            // var y = localStorage.getObject('ds.defect.active.data').id;
+            var z = parseInt($stateParams.id);
+            if (!localStorage.getObject('ds.defect.active.data') ||
+                localStorage.getObject('ds.defect.active.data').id !== parseInt($stateParams.id)) {
                 $indexedDB.openStore('projects', function(store) {
                     store.find(localStorage.getObject('dsproject').id).then(function(res) {
                         angular.forEach(res.defects, function(defect) {
@@ -254,11 +258,22 @@ angular.module($APP.name).controller('DefectsCtrl', [
                                                 subcontr.related = $filter('filter')(subcontr.related, {
                                                     id: ('!' + rel.id)
                                                 });
+                                                ConvertersService.decrease_nr_tasks(subcontr, defect.status_name);
                                             }
                                         })
                                     }
                                     //add to new assignee related list
                                     else if (subcontr.id == defect.completeInfo.assignee_id) {
+                                        subcontr.related.push(defect.completeInfo);
+                                        ConvertersService.increase_nr_tasks(subcontr, defect.status_name);
+                                    }
+                                })
+                            } else {
+                                angular.forEach(project.subcontractors, function(subcontr) {
+                                    if (subcontr.id == defect.completeInfo.assignee_id) {
+                                        subcontr.related = $filter('filter')(subcontr.related, {
+                                            id: ('!' + defect.id)
+                                        });
                                         subcontr.related.push(defect.completeInfo);
                                     }
                                 })
@@ -266,7 +281,6 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         }
                     })
                     saveChanges(project);
-                    // localStorage.setObject('dsproject', project); //TODO: check if ok updated!!
                     localStorage.setObject('ds.defect.active.data', $scope.local.data)
                     localStorage.removeItem('ds.defect.backup')
                     localStorage.setObject('ds.reloadevent', {
@@ -275,7 +289,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                 })
             })
         }
-        $scope.saveCreate = function() { //TODO:
+        $scope.saveCreate = function() {
             if ($scope.local.drawing && $scope.local.drawing.markers && $scope.local.drawing.markers.length && $scope.local.data.title) {
                 $rootScope.disableedit = true;
                 var nextId = 0;
@@ -299,24 +313,22 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         localStorredDef.attachements = [];
                         localStorredDef.comments = [];
                         localStorredDef.id = newDef.id;
+                        localStorredDef.due_date = newDef.due_date;
                         localStorredDef.priority_name = newDef.priority_name;
                         localStorredDef.severity_name = newDef.severity_name;
                         localStorredDef.status_name = newDef.status_name;
                         localStorredDef.title = newDef.title;
                         localStorredDef.completeInfo = newDef;
-                        //TODO: add attachements and comments
-
-
-
-
+                        //TODO: add attachements
 
                         angular.forEach(project.subcontractors, function(subcontr) {
                             if (subcontr.id == newDef.assignee_id) {
                                 subcontr.related.push(newDef);
+                                ConvertersService.increase_nr_tasks(subcontr, newDef.status_name)
                             }
                         })
 
-                        localStorage.setObject('ds.defect.active.data', $scope.local.data);
+                        localStorage.setObject('ds.defect.active.data', ConvertersService.clear_id($scope.local.data));
                         localStorage.removeItem('ds.defect.backup');
                         angular.forEach(project.drawings, function(drawing) {
                             if (drawing.id == $scope.local.drawing.id) {

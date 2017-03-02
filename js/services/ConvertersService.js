@@ -7,7 +7,10 @@ function ConvertersService($http) {
         init_defect: init_defect,
         save_defect: save_defect,
         save_local: save_local,
-        modify_subcontractor: modify_subcontractor
+        modify_subcontractor: modify_subcontractor,
+        increase_nr_tasks: increase_nr_tasks,
+        decrease_nr_tasks: decrease_nr_tasks,
+        clear_id: clear_id
     }
     return service;
 
@@ -70,4 +73,59 @@ function ConvertersService($http) {
         subcontr.registration_number = subcontractor.registration_number;
     }
 
+    function increase_nr_tasks(subcontr, task) {
+        switch (task) {
+            case "Complete":
+                subcontr.completed_tasks++;
+                break;
+            case "Incomplete":
+                subcontr.incomplete_tasks++;
+                break;
+            case "Partially Completed":
+                subcontr.partially_completed_tasks++;
+                break;
+            case "Delayed":
+                subcontr.delayed_tasks++;
+                break;
+            case "Contested":
+                subcontr.contested_tasks++;
+                break;
+            case "Closed Out":
+                subcontr.closed_out_tasks++;
+                break
+            default:
+                subcontr.incomplete_tasks++;
+        }
+    }
+
+    function decrease_nr_tasks(subcontr, task) {
+        switch (task) {
+            case "Complete":
+                subcontr.completed_tasks--;
+                break;
+            case "Incomplete":
+                subcontr.incomplete_tasks--;
+                break;
+            case "Partially Completed":
+                subcontr.partially_completed_tasks--;
+                break;
+            case "Delayed":
+                subcontr.delayed_tasks--;
+                break;
+            case "Contested":
+                subcontr.contested_tasks--;
+                break;
+            case "Closed Out":
+                subcontr.closed_out_tasks--;
+                break
+            default:
+                subcontr.incomplete_tasks--;
+        }
+    }
+
+    function clear_id(defect) {
+        var def = angular.copy(defect);
+        def.id = 0;
+        return def;
+    }
 };

@@ -53,7 +53,6 @@ angular.module($APP.name).controller('TabCtrl', [
 
 
         $scope.reload = function() {
-          console.log("reload!");
             $scope.settings.loaded = false;
             $scope.list = [];
             switch ($scope.settings.tabActive) {
@@ -90,6 +89,7 @@ angular.module($APP.name).controller('TabCtrl', [
                     })
                     break;
                 case 'defects':
+                    console.log("get defects from indexedDB - reload");
                     $indexedDB.openStore('projects', function(store) {
                         store.find($scope.settings.project.id).then(function(res) {
                             $scope.list = [];
@@ -146,8 +146,7 @@ angular.module($APP.name).controller('TabCtrl', [
                     }]
                 }).then(function(res) {
                     if (res !== 'close') {
-                        SubcontractorsService.invite(res).then(function(result) {
-                        })
+                        SubcontractorsService.invite(res).then(function(result) {})
                     }
                 }, function(err) {
                     console.log('Err:', err);

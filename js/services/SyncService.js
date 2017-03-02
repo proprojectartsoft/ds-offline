@@ -201,16 +201,20 @@ angular.module($APP.name).factory('SyncService', [
                         function getAllDrawings(projects, doDownload, path) {
                             var def = $q.defer();
                             var draws = [];
+
+                            var cnt = 0;
                             angular.forEach(projects, function(project) {
                                 DrawingsService.list(project.id).then(function(drawings) {
+                                  cnt++;
                                     project.drawings = drawings;
-                                    angular.forEach(project.drawings, function(draw) {
+                                    for (var i = 0; i < project.drawings.length; i++) {
+                                      console.log("for " + cnt);
                                         draws.push({
                                             "proj": project,
-                                            "draw": draw
-                                        });
-                                        $timeout(function() {}, 100);
-                                    })
+                                            "draw": project.drawings[i]
+                                        })
+                                    }
+                                    console.log("after for " + cnt);
                                     if (projects[projects.length - 1] === project) {
                                         if (draws.length == 0) {
                                             def.resolve();
