@@ -7,8 +7,9 @@ angular.module($APP.name).controller('ProjectsCtrl', [
     '$ionicPopup',
     '$ionicModal',
     '$indexedDB',
+    '$filter',
     'ProjectService',
-    function($rootScope, $state, $scope, $ionicSideMenuDelegate, $timeout, $ionicPopup, $ionicModal, $indexedDB, ProjectService) {
+    function($rootScope, $state, $scope, $ionicSideMenuDelegate, $timeout, $ionicPopup, $ionicModal, $indexedDB, $filter, ProjectService) {
         $rootScope.navTitle = 'Projects';
         $rootScope.projects = [];
         localStorage.setObject('dsnavTitle', 'Choose a project');
@@ -23,11 +24,9 @@ angular.module($APP.name).controller('ProjectsCtrl', [
                 })
                 var aux = localStorage.getObject('dsproject')
                 if (aux) {
-                    angular.forEach($rootScope.projects, function(value, key) {
-                        if (value.id == aux.id) {
-                            $scope.local.activeProject = value;
-                        }
-                    });
+                    $scope.local.activeProject = $filter('filter')($rootScope.projects, {
+                        id: aux.id
+                    })[0];
                 }
             })
         })

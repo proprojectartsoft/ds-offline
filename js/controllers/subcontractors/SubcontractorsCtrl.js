@@ -4,10 +4,11 @@ angular.module($APP.name).controller('SubcontractorsCtrl', [
     '$stateParams',
     '$state',
     '$indexedDB',
+    '$filter',
     'SettingsService',
     'SubcontractorsService',
     'ConvertersService',
-    function($rootScope, $scope, $stateParams, $state, $indexedDB, SettingsService, SubcontractorsService, ConvertersService) {
+    function($rootScope, $scope, $stateParams, $state, $indexedDB, $filter, SettingsService, SubcontractorsService, ConvertersService) {
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.tabActive = 'subcontractors'
@@ -24,14 +25,13 @@ angular.module($APP.name).controller('SubcontractorsCtrl', [
         if (!localStorage.getObject('dsscact') || localStorage.getObject('dsscact').id !== parseInt($stateParams.id)) {
             $indexedDB.openStore('projects', function(store) {
                 store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                    angular.forEach(res.subcontractors, function(subcontractor) {
-                        if (subcontractor.id == $stateParams.id) {
-                            delete subcontractor.company_logo;
-                            localStorage.setObject('dsscact', subcontractor)
-                            $scope.local.data = subcontractor;
-                            $scope.settings.subHeader = 'Subcontractor - ' + $scope.local.data.last_name + ' ' + $scope.local.data.first_name;
-                        }
-                    })
+                    var subcontractor = $filter('filter')(res.subcontractors, {
+                        id: $stateParams.id
+                    })[0];
+                    delete subcontractor.company_logo;
+                    localStorage.setObject('dsscact', subcontractor)
+                    $scope.local.data = subcontractor;
+                    $scope.settings.subHeader = 'Subcontractor - ' + $scope.local.data.last_name + ' ' + $scope.local.data.first_name;
                 })
             })
         } else {
@@ -51,18 +51,18 @@ angular.module($APP.name).controller('SubcontractorsCtrl', [
             $rootScope.disableedit = true;
             $indexedDB.openStore("projects", function(store) {
                 store.find(localStorage.getObject('dsproject').id).then(function(project) {
-                    angular.forEach(project.subcontractors, function(subcontr) {
-                        if (subcontr.id == $scope.local.data.id) {
-                            ConvertersService.modify_subcontractor(subcontr, $scope.local.data);
-                            subcontr.isModified = true;
-                            project.isModified = true;
-                            saveChanges(project);
-                            localStorage.setObject('dsscact', $scope.local.data)
-                            localStorage.setObject('ds.reloadevent', {
-                                value: true
-                            });
-                        }
-                    })
+                    var subcontr = $filter('filter')(project.subcontractors, {
+                        id: $scope.local.data.id
+                    })[0];
+                    ConvertersService.modify_subcontractor(subcontr, $scope.local.data);
+                    subcontr.isModified = true;
+                    project.isModified = true;
+                    saveChanges(project);
+                    localStorage.setObject('dsscact', $scope.local.data)
+                    localStorage.setObject('ds.reloadevent', {
+                        value: true
+                    });
+
                 })
             })
         }

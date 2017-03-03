@@ -8,9 +8,10 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
     'SubcontractorsService',
     '$ionicModal',
     '$indexedDB',
+    '$filter',
     'DefectsService',
     'SubcontractorsService',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, SubcontractorsService, $ionicModal, $indexedDB, DefectsService, SubcontractorsService) {
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, SubcontractorsService, $ionicModal, $indexedDB, $filter, DefectsService, SubcontractorsService) {
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.subHeader = SettingsService.get_settings('subHeader');
@@ -25,25 +26,24 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
 
         $indexedDB.openStore('projects', function(store) {
             store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                angular.forEach(res.subcontractors, function(subcontr) {
-                    if (subcontr.id == $scope.local.data.id) {
-                        $scope.local.list = subcontr.related;
-                        $scope.local.loaded = true;
-                        $scope.local.poplist = [];
+                var subcontr = $filter('filter')(res.subcontractors, {
+                    id: $scope.local.data.id
+                })[0];
+                $scope.local.list = subcontr.related;
+                $scope.local.loaded = true;
+                $scope.local.poplist = [];
 
-                        for (var i = 0; i < res.defects.length; i++) {
-                            var sw = true;
-                            for (var j = 0; j < subcontr.related.length; j++) {
-                                if (res.defects[i].id === subcontr.related[j].id) {
-                                    sw = false;
-                                }
-                            }
-                            if (sw) {
-                                $scope.local.poplist.push(res.defects[i]);
-                            }
+                for (var i = 0; i < res.defects.length; i++) {
+                    var sw = true;
+                    for (var j = 0; j < subcontr.related.length; j++) {
+                        if (res.defects[i].id === subcontr.related[j].id) {
+                            sw = false;
                         }
                     }
-                })
+                    if (sw) {
+                        $scope.local.poplist.push(res.defects[i]);
+                    }
+                }
             })
         })
 
@@ -81,42 +81,39 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
             $scope.modal.hide();
             $indexedDB.openStore('projects', function(store) {
                 store.find($scope.settings.project.id).then(function(project) {
-                    angular.forEach(project.subcontractors, function(subcontr) {
-                        if (subcontr.id == $scope.local.data.id) {
-                            angular.forEach(project.defects, function(defect) {
-                                if (defect.id == related.id) {
-                                    defect.assignee_id = $stateParams.id;
-                                    angular.forEach(project.subcontractors, function(sub) {
-                                      if(sub.id == $stateParams.id){
-                                        defect.assignee_name = sub.first_name + " " + sub.last_name;
-                                      }
-                                    })
-                                    defect.completeInfo.assignee_id = $stateParams.id;
-                                    defect.isNew = true;
-                                    subcontr.isModified = true;
-                                    project.isModified = true;
-                                    subcontr.related.push(defect);
-                                    saveChanges(project);
-                                    $scope.local.list = subcontr.related;
-                                    var defects = angular.copy($scope.local.poplist)
+                    var subcontr = $filter('filter')(project.subcontractors, {
+                        id: $scope.local.data.id
+                    })[0];
+                    var defect = $filter('filter')(project.defects, {
+                        id: related.id
+                    })[0];
+                    defect.assignee_id = $stateParams.id;
+                    var sub = $filter('filter')(project.subcontractors, {
+                        id: $stateParams.id
+                    })[0];
+                    defect.assignee_name = sub.first_name + " " + sub.last_name;
+                    defect.completeInfo.assignee_id = $stateParams.id;
+                    defect.isNew = true;
+                    subcontr.isModified = true;
+                    project.isModified = true;
+                    subcontr.related.push(defect);
+                    saveChanges(project);
+                    $scope.local.list = subcontr.related;
+                    var defects = angular.copy($scope.local.poplist)
 
-                                    $scope.local.poplist = [];
-                                    for (var i = 0; i < defects.length; i++) {
-                                        var sw = true;
-                                        for (var j = 0; j < subcontr.length; j++) {
-                                            if (defects[i].id === result[j].id) {
-                                                sw = false;
-                                            }
-                                        }
-                                        if (sw) {
-                                            $scope.local.poplist.push(defects[i]);
-                                        }
-                                    }
-                                    $scope.local.loaded = true;
-                                }
-                            })
+                    $scope.local.poplist = [];
+                    for (var i = 0; i < defects.length; i++) {
+                        var sw = true;
+                        for (var j = 0; j < subcontr.length; j++) {
+                            if (defects[i].id === result[j].id) {
+                                sw = false;
+                            }
                         }
-                    })
+                        if (sw) {
+                            $scope.local.poplist.push(defects[i]);
+                        }
+                    }
+                    $scope.local.loaded = true;
                 })
             })
         }

@@ -7,8 +7,9 @@ angular.module($APP.name).controller('_DefectCommentsCtrl', [
     '$timeout',
     '$indexedDB',
     '$ionicPopup',
+    '$filter',
     'DefectsService',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, $ionicPopup, DefectsService) {
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, $ionicPopup, $filter, DefectsService) {
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.subHeader = SettingsService.get_settings('subHeader');
@@ -20,12 +21,11 @@ angular.module($APP.name).controller('_DefectCommentsCtrl', [
 
         $indexedDB.openStore('projects', function(store) {
             store.find(localStorage.getObject('dsproject').id).then(function(project) {
-                angular.forEach(project.defects, function(defect) {
-                    if (defect.id == $stateParams.id) {
-                        $scope.local.loaded = true;
-                        $scope.local.list = defect.comments;
-                    }
-                })
+                var defect = $filter('filter')(project.defects, {
+                    id: ($stateParams.id)
+                })[0];
+                $scope.local.loaded = true;
+                $scope.local.list = defect.comments;
             })
         })
 
@@ -33,28 +33,27 @@ angular.module($APP.name).controller('_DefectCommentsCtrl', [
             if ($scope.local.comment) {
                 $indexedDB.openStore('projects', function(store) {
                     store.find(localStorage.getObject('dsproject').id).then(function(project) {
-                        angular.forEach(project.users, function(user) {
-                            if (user.login_name == localStorage.getObject('ds.user').name) {
-                                request = {
-                                    "id": 0,
-                                    "text": $scope.local.comment,
-                                    "user_id": user.id,
-                                    "user_name": user.first_name + " " + user.last_name,
-                                    "defect_id": $stateParams.id,
-                                    "date": Date.now()
-                                };
-                            }
-                        })
-                        angular.forEach(project.defects, function(defect) {
-                            if (defect.id == $stateParams.id) {
-                                request.isNew = true;   //TODO:
-                                defect.isModified = true;
-                                project.isModified = true;
-                                defect.comments.push(request);
-                                $scope.local.comment = '';
-                                $scope.local.list = defect.comments;
-                            }
-                        })
+                        var user = $filter('filter')(project.users, {
+                            login_name: (localStorage.getObject('ds.user').name)
+                        })[0];
+                        request = {
+                            "id": 0,
+                            "text": $scope.local.comment,
+                            "user_id": user.id,
+                            "user_name": user.first_name + " " + user.last_name,
+                            "defect_id": $stateParams.id,
+                            "date": Date.now()
+                        };
+                        var defect = $filter('filter')(project.defects, {
+                            id: $stateParams.id
+                        })[0];
+                        request.isNew = true;
+                        if (typeof defect.isNew == 'undefined')
+                            defect.isModified = true;
+                        project.isModified = true;
+                        defect.comments.push(request);
+                        $scope.local.comment = '';
+                        $scope.local.list = defect.comments;
                         saveChanges(project);
                     })
                 })

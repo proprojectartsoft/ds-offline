@@ -6,8 +6,9 @@ angular.module($APP.name).controller('DrawingsCtrl', [
     'SettingsService',
     '$timeout',
     '$indexedDB',
+    '$filter',
     'DrawingsService',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, DrawingsService) {
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, $filter, DrawingsService) {
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.subHeader = SettingsService.get_settings('subHeader');
@@ -74,14 +75,13 @@ angular.module($APP.name).controller('DrawingsCtrl', [
         if (!localStorage.getObject('dsdrwact') || localStorage.getObject('dsdrwact').id !== parseInt($stateParams.id)) {
             $indexedDB.openStore('projects', function(store) {
                 store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                    angular.forEach(res.drawings, function(drawing) {
-                        if (drawing.id == $stateParams.id) {
-                            localStorage.setObject('dsdrwact', drawing)
-                            $scope.local.data = drawing;
-                            $scope.settings.subHeader = 'Drawing - ' + $scope.local.data.title;
-                            setPdf($scope.local.data.pdfPath)
-                        }
-                    })
+                    var drawing = $filter('filter')(res.drawings, {
+                        id: $stateParams.id
+                    })[0];
+                    localStorage.setObject('dsdrwact', drawing)
+                    $scope.local.data = drawing;
+                    $scope.settings.subHeader = 'Drawing - ' + $scope.local.data.title;
+                    setPdf($scope.local.data.pdfPath)
                 })
             })
         } else {
@@ -103,7 +103,7 @@ angular.module($APP.name).controller('DrawingsCtrl', [
             localStorage.removeItem('ds.drawing.backup')
             $rootScope.disableedit = true;
         }
-        $scope.saveEdit = function() {
+        $scope.saveEdit = function() { //TODO:
             $rootScope.disableedit = true;
             DrawingsService.update($scope.local.data).then(function(result) {
                 localStorage.setObject('dsdrwact', $scope.local.data)

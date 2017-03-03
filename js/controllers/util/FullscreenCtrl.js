@@ -6,9 +6,10 @@ angular.module($APP.name).controller('FullscreenCtrl', [
     'SettingsService',
     '$timeout',
     '$indexedDB',
+    '$filter',
     'DrawingsService',
     '$ionicScrollDelegate',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, DrawingsService, $ionicScrollDelegate) { //   $scope.settings = {tabs:$rootScope.settings.tabs,tabActive:$rootScope.settings.tabActive};
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, $filter, DrawingsService, $ionicScrollDelegate) { //   $scope.settings = {tabs:$rootScope.settings.tabs,tabActive:$rootScope.settings.tabActive};
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.subHeader = SettingsService.get_settings('subHeader');
@@ -259,14 +260,13 @@ angular.module($APP.name).controller('FullscreenCtrl', [
             if (!localStorage.getObject('dsdrwact') || localStorage.getObject('dsdrwact').id !== parseInt($stateParams.id)) {
                 $indexedDB.openStore('projects', function(store) {
                     store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                        angular.forEach(res.drawings, function(drawing) {
-                            if (drawing.id == $stateParams.id) {
-                                localStorage.setObject('dsdrwact', drawing)
-                                $scope.local.data = drawing;
-                                $scope.settings.subHeader = 'Drawing - ' + $scope.local.data.title;
-                                setPdf($scope.local.data.pdfPath)
-                            }
-                        })
+                        var drawing = $filter('filter')(res.drawings, { //TODO: verify
+                            id: $stateParams.id
+                        })[0];
+                        localStorage.setObject('dsdrwact', drawing)
+                        $scope.local.data = drawing;
+                        $scope.settings.subHeader = 'Drawing - ' + $scope.local.data.title;
+                        setPdf($scope.local.data.pdfPath)
                     })
                 })
             } else {

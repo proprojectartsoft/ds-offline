@@ -6,8 +6,9 @@ angular.module($APP.name).controller('_DrawingRelatedCtrl', [
     'SettingsService',
     '$timeout',
     '$indexedDB',
+    '$filter',
     'DrawingsService',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, DrawingsService) { //   $scope.settings = {tabs:$rootScope.settings.tabs,tabActive:$rootScope.settings.tabActive};
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $indexedDB, $filter, DrawingsService) { //   $scope.settings = {tabs:$rootScope.settings.tabs,tabActive:$rootScope.settings.tabActive};
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.tabActive = SettingsService.get_settings('tabActive');
@@ -24,12 +25,10 @@ angular.module($APP.name).controller('_DrawingRelatedCtrl', [
 
         $indexedDB.openStore('projects', function(store) {
             store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                angular.forEach(res.drawings, function(drawing) {
-                    if (drawing.id == $stateParams.id) {
-                        $scope.local.list = drawing.relatedDefects;
-                        $scope.local.loaded = true;
-                    }
-                })
+                $scope.local.list = $filter('filter')(res.drawings, {
+                    id: $stateParams.id
+                })[0].relatedDefects;
+                $scope.local.loaded = true;
             })
         })
 
