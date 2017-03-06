@@ -137,7 +137,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                 $scope.local.data.project_id = $scope.settings.project.id;
                 $scope.local.data.defect_id = 0;
                 $scope.local.data.related_tasks = [];
-                $scope.local.data.due_date = "";
+                $scope.local.data.due_date = 0;
                 $scope.local.data.status_obj = {
                     id: 0,
                     name: 'Incomplete'
@@ -227,6 +227,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                     defect.priority_name = defect.completeInfo.priority_name;
                     defect.severity_name = defect.completeInfo.severity_name;
                     defect.title = defect.completeInfo.title;
+                    defect.completeInfo.due_date = new Date(defect.completeInfo.due_date).getTime();
                     defect.due_date = defect.completeInfo.due_date;
                     if (typeof defect.isNew == 'undefined')
                         defect.isModified = true;
@@ -245,14 +246,15 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         var subcontr = $filter('filter')(project.subcontractors, {
                             id: old_assignee_id
                         })[0]
-                        var rel = $filter('filter')(subcontr.related, {
-                            id: defect.id
-                        })[0];
-                        subcontr.related = $filter('filter')(subcontr.related, {
-                            id: ('!' + rel.id)
-                        });
-                        ConvertersService.decrease_nr_tasks(subcontr, defect.status_name);
-
+                        if (subcontr) {
+                            var rel = $filter('filter')(subcontr.related, {
+                                id: defect.id
+                            })[0];
+                            subcontr.related = $filter('filter')(subcontr.related, {
+                                id: ('!' + rel.id)
+                            });
+                            ConvertersService.decrease_nr_tasks(subcontr, defect.status_name);
+                        }
                         //add to new assignee related list
                         var newSubcontr = $filter('filter')(project.subcontractors, {
                             id: defect.completeInfo.assignee_id
@@ -263,10 +265,12 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         var subcontr = $filter('filter')(project.subcontractors, {
                             id: defect.completeInfo.assignee_id
                         })[0];
-                        subcontr.related = $filter('filter')(subcontr.related, {
-                            id: ('!' + defect.id)
-                        });
-                        subcontr.related.push(defect.completeInfo);
+                        if (subcontr) {
+                            subcontr.related = $filter('filter')(subcontr.related, {
+                                id: ('!' + defect.id)
+                            });
+                            subcontr.related.push(defect.completeInfo);
+                        }
                     }
                     saveChanges(project);
                     localStorage.setObject('ds.defect.active.data', $scope.local.data)
@@ -301,6 +305,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         localStorredDef.attachements = [];
                         localStorredDef.comments = [];
                         localStorredDef.id = newDef.id;
+                        newDef.due_date = new Date(newDef.due_date).getTime();
                         localStorredDef.due_date = newDef.due_date;
                         localStorredDef.priority_name = newDef.priority_name;
                         localStorredDef.severity_name = newDef.severity_name;
@@ -312,8 +317,10 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         var subcontr = $filter('filter')(project.subcontractors, {
                             id: newDef.assignee_id
                         })[0];
-                        subcontr.related.push(newDef);
-                        ConvertersService.increase_nr_tasks(subcontr, newDef.status_name);
+                        if (subcontr) {
+                            subcontr.related.push(newDef);
+                            ConvertersService.increase_nr_tasks(subcontr, newDef.status_name);
+                        }
                         localStorage.setObject('ds.defect.active.data', ConvertersService.clear_id($scope.local.data));
                         localStorage.removeItem('ds.defect.backup');
                         var drawing = $filter('filter')(project.drawings, {
@@ -384,7 +391,6 @@ angular.module($APP.name).controller('DefectsCtrl', [
         }
 
         $scope.back = function() {
-            console.log("back");
             var routeback = localStorage.getObject('ds.defect.back')
             if ($stateParams.id === '0') {
                 localStorage.removeItem('ds.defect.new.data');
@@ -404,7 +410,6 @@ angular.module($APP.name).controller('DefectsCtrl', [
             }
         }
         $scope.go = function(predicate, item) {
-            console.log("go");
             $state.go('app.' + predicate, {
                 id: item
             });

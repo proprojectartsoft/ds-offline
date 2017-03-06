@@ -61,7 +61,6 @@ angular.module($APP.name).factory('SyncService', [
                                 delete defect.isNew;
                                 delete defect.isModified;
                             })
-
                             localStorage.setObject('commentsToAdd', comments);
                             localStorage.setObject('defectRelToAdd', related);
                             localStorage.setObject('attachToAdd', attach);
@@ -117,11 +116,14 @@ angular.module($APP.name).factory('SyncService', [
                                             var draw = defect.draw;
                                             DefectsService.create(defect.completeInfo).then(function(res) {
                                                 DrawingsService.update(draw).then(function(drawingupdate) {
+                                                    var x = localStorage.getObject('defectsToAdd');
+                                                    var y = x[localStorage.getObject('defectsToAdd').length - 1];
+
                                                     if (localStorage.getObject('defectsToAdd')[localStorage.getObject('defectsToAdd').length - 1].id == defect.id)
                                                         def.resolve();
+                                                    localStorage.setObject('defectsToAdd', []);
                                                 });
                                             })
-                                            localStorage.setObject('defectsToAdd', []);
                                         })
                                         angular.forEach(localStorage.getObject('defectsToUpd'), function(defect) {
                                             DefectsService.update(defect).then(function(res) {
@@ -205,16 +207,14 @@ angular.module($APP.name).factory('SyncService', [
                             var cnt = 0;
                             angular.forEach(projects, function(project) {
                                 DrawingsService.list(project.id).then(function(drawings) {
-                                  cnt++;
+                                    cnt++;
                                     project.drawings = drawings;
                                     for (var i = 0; i < project.drawings.length; i++) {
-                                      console.log("for " + cnt);
                                         draws.push({
                                             "proj": project,
                                             "draw": project.drawings[i]
                                         })
                                     }
-                                    console.log("after for " + cnt);
                                     if (projects[projects.length - 1] === project) {
                                         if (draws.length == 0) {
                                             def.resolve();
