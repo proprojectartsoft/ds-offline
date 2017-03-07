@@ -89,13 +89,11 @@ angular.module($APP.name).controller('DefectsCtrl', [
                 }
             });
         };
-        var modalDrawing = function() { //TODO:
-            DrawingsService.list_light($scope.settings.project.id).then(function(result) {
-                angular.forEach(result, function(draw) {
-                    draw.path = $APP.server + '/pub/drawings/' + draw.path;
-                    draw.resized_path = $APP.server + '/pub/drawings/' + draw.resized_path;
+        var modalDrawing = function() {
+            $indexedDB.openStore('projects', function(store) {
+                store.find($scope.settings.project.id).then(function(proj) {
+                    $scope.local.drawingsLight = proj.light_drawings;
                 })
-                $scope.local.drawingsLight = result;
             })
             $scope.modal.show();
         }

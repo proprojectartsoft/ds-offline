@@ -7,13 +7,14 @@ angular.module($APP.name).factory('SyncService', [
     '$timeout',
     '$ionicPopup',
     '$ionicPlatform',
+    '$filter',
     'orderByFilter',
     'ProjectService',
     'DrawingsService',
     'SubcontractorsService',
     'DefectsService',
     'DownloadsService',
-    function($q, $http, $rootScope, $indexedDB, $state, $timeout, $ionicPopup, $ionicPlatform, orderBy, ProjectService, DrawingsService, SubcontractorsService, DefectsService, DownloadsService) {
+    function($q, $http, $rootScope, $indexedDB, $state, $timeout, $ionicPopup, $ionicPlatform, $filter, orderBy, ProjectService, DrawingsService, SubcontractorsService, DefectsService, DownloadsService) {
         return {
             sync: function() {
                 $timeout(function() {
@@ -27,6 +28,17 @@ angular.module($APP.name).factory('SyncService', [
                             content: "",
                             buttons: []
                         });
+
+                        function updateDrawings(project) {
+                            var drawingsToUpd = [];
+                            angular.forEach(project.drawings, function(draw) {
+                                if (typeof draw.isModified != 'undefined') {
+                                    delete draw.isModified;
+                                    drawingsToUpd.push(draw);
+                                }
+                            })
+                            localStorage.setObject('drawingsToUpd', drawingsToUpd);
+                        }
 
                         function storeNewDefects(project) {
                             var comments = localStorage.getObject('commentsToAdd') || [];
@@ -93,6 +105,7 @@ angular.module($APP.name).factory('SyncService', [
                                     if (projects.length != 0) {
                                         angular.forEach(projects, function(project) {
                                             if (project.isModified) {
+                                                updateDrawings(project);
                                                 storeNewDefects(project);
                                                 storeNewSubcontractors(project);
                                                 delete project.isModified;
@@ -116,9 +129,6 @@ angular.module($APP.name).factory('SyncService', [
                                             var draw = defect.draw;
                                             DefectsService.create(defect.completeInfo).then(function(res) {
                                                 DrawingsService.update(draw).then(function(drawingupdate) {
-                                                    var x = localStorage.getObject('defectsToAdd');
-                                                    var y = x[localStorage.getObject('defectsToAdd').length - 1];
-
                                                     if (localStorage.getObject('defectsToAdd')[localStorage.getObject('defectsToAdd').length - 1].id == defect.id)
                                                         def.resolve();
                                                     localStorage.setObject('defectsToAdd', []);
@@ -128,6 +138,12 @@ angular.module($APP.name).factory('SyncService', [
                                         angular.forEach(localStorage.getObject('defectsToUpd'), function(defect) {
                                             DefectsService.update(defect).then(function(res) {
                                                 localStorage.setObject('defectsToUpd', []);
+                                            })
+                                        })
+
+                                        angular.forEach(localStorage.getObject('drawingsToUpd'), function(draw) {
+                                            DrawingsService.update(draw).then(function(result) {
+                                                localStorage.setObject('drawingsToUpd', []);
                                             })
                                         })
                                     } else {
@@ -167,6 +183,19 @@ angular.module($APP.name).factory('SyncService', [
                                     SubcontractorsService.list_defects(project.id, subcontr.id).then(function(result) {
                                         subcontr.related = result;
                                     })
+                                })
+                            })
+                        }
+
+                        function createLightDrawings(project) {
+                            DrawingsService.list_light(project.id).then(function(result) {
+                                project.light_drawings = result;
+                                angular.forEach(result, function(draw) {
+                                    var d = $filter('filter')(project.drawings, {
+                                        id: draw.id
+                                    })[0];
+                                    draw.path = d.pdfPath;
+                                    draw.resized_path = draw.path;
                                 })
                             })
                         }
@@ -232,6 +261,7 @@ angular.module($APP.name).factory('SyncService', [
                             ProjectService.list().then(function(projects) {
                                 getAllDrawings(projects, doDownload, path).then(function() {
                                     angular.forEach(projects, function(project) {
+                                        createLightDrawings(project);
                                         createSubcontractors(project);
                                         createDefects(project);
                                         ProjectService.users(project.id).then(function(result) {

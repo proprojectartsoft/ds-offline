@@ -105,12 +105,47 @@ angular.module($APP.name).controller('DrawingsCtrl', [
         }
         $scope.saveEdit = function() { //TODO:
             $rootScope.disableedit = true;
-            DrawingsService.update($scope.local.data).then(function(result) {
-                localStorage.setObject('dsdrwact', $scope.local.data)
-                localStorage.removeItem('ds.drawing.backup')
-                localStorage.setObject('ds.reloadevent', {
-                    value: true
-                });
+            $indexedDB.openStore('projects', function(store) {
+                store.find(localStorage.getObject('dsproject').id).then(function(proj) {
+                    var draw = $filter('filter')(proj.drawings, {
+                        id: $scope.local.data.id
+                    })[0];
+                    draw.title = $scope.local.data.title;
+                    draw.code = $scope.local.data.code;
+                    draw.revision = $scope.local.data.revision;
+                    draw.drawing_date = new Date($scope.local.data.drawing_date).getTime();
+                    proj.isModified = true;
+                    draw.isModified = true;
+                    localStorage.setObject('dsdrwact', $scope.local.data)
+                    localStorage.removeItem('ds.drawing.backup')
+                    localStorage.setObject('ds.reloadevent', {
+                        value: true
+                    });
+                    saveChanges(proj);
+                })
+            })
+        }
+
+        function saveChanges(project) {
+            $indexedDB.openStore('projects', function(store) {
+                store.upsert(project).then(
+                    function(e) {
+                        store.find(localStorage.getObject('dsproject').id).then(function(project) {})
+                    },
+                    function(e) {
+                        var offlinePopup = $ionicPopup.alert({
+                            title: "Unexpected error",
+                            template: "<center>An unexpected error has occurred.</center>",
+                            content: "",
+                            buttons: [{
+                                text: 'Ok',
+                                type: 'button-positive',
+                                onTap: function(e) {
+                                    offlinePopup.close();
+                                }
+                            }]
+                        });
+                    })
             })
         }
 
