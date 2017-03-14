@@ -8,7 +8,7 @@ angular.module($APP.name).factory('DownloadsService', [
     'DrawingsService',
     function($http, $rootScope, $ionicPlatform, $cordovaFile, $cordovaFileTransfer, $q, DrawingsService) {
         return {
-            downloadPdf: function(drawing, dir) { //TODO: check if ok
+            downloadPdf: function(drawing, dir) {
                 var def = $q.defer();
                 return $ionicPlatform.ready(function() {
                     if (ionic.Platform.isIPad() || ionic.Platform.isAndroid() || ionic.Platform.isIOS()) {
@@ -46,7 +46,7 @@ angular.module($APP.name).factory('DownloadsService', [
                                 })
                             },
                             false);
-                    } // else def.resolve('fail');
+                    } 
                 }).then(function(success) {
                     return def.promise;
                 })
@@ -71,7 +71,7 @@ angular.module($APP.name).factory('DownloadsService', [
                                 console.log(error);
                                 def.resolve('fail');
                             });
-                    } //  else def.resolve('fail');
+                    }
                 }).then(function(success) {
                     return def.promise;
                 })

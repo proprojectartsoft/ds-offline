@@ -62,7 +62,6 @@ angular.module($APP.name).controller('SubcontractorsCtrl', [
                     localStorage.setObject('ds.reloadevent', {
                         value: true
                     });
-
                 })
             })
         }

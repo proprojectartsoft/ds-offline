@@ -260,7 +260,7 @@ angular.module($APP.name).controller('FullscreenCtrl', [
             if (!localStorage.getObject('dsdrwact') || localStorage.getObject('dsdrwact').id !== parseInt($stateParams.id)) {
                 $indexedDB.openStore('projects', function(store) {
                     store.find(localStorage.getObject('dsproject').id).then(function(res) {
-                        var drawing = $filter('filter')(res.drawings, { //TODO: verify
+                        var drawing = $filter('filter')(res.drawings, {
                             id: $stateParams.id
                         })[0];
                         localStorage.setObject('dsdrwact', drawing)

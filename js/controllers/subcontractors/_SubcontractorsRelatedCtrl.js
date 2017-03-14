@@ -5,13 +5,11 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
     '$state',
     'SettingsService',
     '$timeout',
-    'SubcontractorsService',
     '$ionicModal',
     '$indexedDB',
     '$filter',
-    'DefectsService',
-    'SubcontractorsService',
-    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, SubcontractorsService, $ionicModal, $indexedDB, $filter, DefectsService, SubcontractorsService) {
+    'ConvertersService',
+    function($rootScope, $scope, $stateParams, $state, SettingsService, $timeout, $ionicModal, $indexedDB, $filter, ConvertersService) {
         $scope.settings = {};
         $scope.settings.header = SettingsService.get_settings('header');
         $scope.settings.subHeader = SettingsService.get_settings('subHeader');
@@ -81,6 +79,17 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
             $scope.modal.hide();
             $indexedDB.openStore('projects', function(store) {
                 store.find($scope.settings.project.id).then(function(project) {
+                    for (var i = 0; i < project.subcontractors.length; i++) {
+                        if ($filter('filter')(project.subcontractors[i].related, {
+                                id: related.id
+                            }).length != 0) {
+                            project.subcontractors[i].related = $filter('filter')(project.subcontractors[i].related, {
+                                id: ('!' + related.id)
+                            });
+                            ConvertersService.decrease_nr_tasks(project.subcontractors[i], related.status_name);
+                            i = project.subcontractors.length;
+                        }
+                    }
                     var subcontr = $filter('filter')(project.subcontractors, {
                         id: $scope.local.data.id
                     })[0];
@@ -92,15 +101,16 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
                         id: $stateParams.id
                     })[0];
                     defect.assignee_name = sub.first_name + " " + sub.last_name;
+                    defect.completeInfo.assignee_name = sub.first_name + " " + sub.last_name;
                     defect.completeInfo.assignee_id = $stateParams.id;
-                    defect.isNew = true;
-                    subcontr.isModified = true;
+                    if (typeof defect.isNew == 'undefined')
+                        defect.isModified = true;
                     project.isModified = true;
                     subcontr.related.push(defect);
+                    ConvertersService.increase_nr_tasks(subcontr, defect.status_name);
                     saveChanges(project);
                     $scope.local.list = subcontr.related;
-                    var defects = angular.copy($scope.local.poplist)
-
+                    var defects = angular.copy($scope.local.poplist);
                     $scope.local.poplist = [];
                     for (var i = 0; i < defects.length; i++) {
                         var sw = true;

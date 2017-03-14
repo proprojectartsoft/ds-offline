@@ -103,7 +103,7 @@ angular.module($APP.name).controller('DrawingsCtrl', [
             localStorage.removeItem('ds.drawing.backup')
             $rootScope.disableedit = true;
         }
-        $scope.saveEdit = function() { //TODO:
+        $scope.saveEdit = function() {
             $rootScope.disableedit = true;
             $indexedDB.openStore('projects', function(store) {
                 store.find(localStorage.getObject('dsproject').id).then(function(proj) {

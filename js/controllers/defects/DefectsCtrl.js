@@ -310,7 +310,6 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         localStorredDef.status_name = newDef.status_name;
                         localStorredDef.title = newDef.title;
                         localStorredDef.completeInfo = newDef;
-                        //TODO: add attachements
 
                         var subcontr = $filter('filter')(project.subcontractors, {
                             id: newDef.assignee_id

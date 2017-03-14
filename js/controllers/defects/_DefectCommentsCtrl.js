@@ -47,9 +47,10 @@ angular.module($APP.name).controller('_DefectCommentsCtrl', [
                         var defect = $filter('filter')(project.defects, {
                             id: $stateParams.id
                         })[0];
-                        request.isNew = true;
-                        if (typeof defect.isNew == 'undefined')
+                        if (typeof defect.isNew == 'undefined') {
                             defect.isModified = true;
+                            request.isNew = true;
+                        }
                         project.isModified = true;
                         defect.comments.push(request);
                         $scope.local.comment = '';

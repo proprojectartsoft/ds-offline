@@ -57,6 +57,9 @@ angular.module($APP.name).controller('TabCtrl', [
             $scope.list = [];
             switch ($scope.settings.tabActive) {
                 case 'drawings':
+                    $timeout(function() {
+
+                    }, 10);
                     $indexedDB.openStore('projects', function(store) {
                         store.find($scope.settings.project.id).then(function(res) {
                             $scope.list = [];

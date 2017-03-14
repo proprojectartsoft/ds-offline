@@ -29,17 +29,6 @@ angular.module($APP.name).factory('SyncService', [
                             buttons: []
                         });
 
-                        function updateDrawings(project) {
-                            var drawingsToUpd = [];
-                            angular.forEach(project.drawings, function(draw) {
-                                if (typeof draw.isModified != 'undefined') {
-                                    delete draw.isModified;
-                                    drawingsToUpd.push(draw);
-                                }
-                            })
-                            localStorage.setObject('drawingsToUpd', drawingsToUpd);
-                        }
-
                         function storeNewDefects(project) {
                             var comments = localStorage.getObject('commentsToAdd') || [];
                             var related = localStorage.getObject('defectRelToAdd') || [];
@@ -54,13 +43,6 @@ angular.module($APP.name).factory('SyncService', [
                                             comments.push(comment);
                                         }
                                     })
-                                    // TODO:
-                                    // angular.forEach(defect.attachements, function(att) {
-                                    // if (typeof att.isNew != 'undefined') {
-                                    // delete att.isNew
-                                    // attach.push(att);
-                                    // }
-                                    // })
                                 }
                                 if (typeof defect.isNew != 'undefined') {
                                     delete defect.isNew;
@@ -80,22 +62,112 @@ angular.module($APP.name).factory('SyncService', [
                             localStorage.setObject('defectsToUpd', defectsToUpd);
                         }
 
-                        function storeNewSubcontractors(project) {
-                            var related = localStorage.getObject('defectsToUpd') || [];
+                        function storeUpdatedDrawings(drawings) {
+                            var drawingsToUpd = [];
+                            angular.forEach(drawings, function(draw) {
+                                if (typeof draw.isModified != 'undefined') {
+                                    delete draw.isModified;
+                                    drawingsToUpd.push(draw);
+                                }
+                            })
+                            localStorage.setObject('drawingsToUpd', drawingsToUpd);
+                        }
+
+                        function syncSubcontractors(project) {
+                            // var related = localStorage.getObject('defectsToUpd') || [];
                             angular.forEach(project.subcontractors, function(subcontr) {
                                 if (typeof subcontr.isModified != 'undefined') {
                                     SubcontractorsService.update(subcontr).then(function(result) {
-                                        angular.forEach(subcontr.related, function(rel) {
-                                            if (typeof rel.isNew != 'undefined') {
-                                                delete rel.isNew;
-                                                related.push(rel.completeInfo);
-                                            }
-                                        })
+                                        delete subcontr.isModified;
                                     })
-                                    delete subcontr.isModified;
                                 }
                             })
-                            localStorage.setObject('defectsToUpd', related);
+                        }
+
+                        function syncComments(comments) {
+                            angular.forEach(comments, function(comment) {
+                                DefectsService.create_comment(comment).then(function(res) {
+                                    localStorage.setObject('commentsToAdd', []);
+                                })
+                            })
+                        }
+
+                        function addComments(comments, defect_id, def) {
+                            angular.forEach(comments, function(comment) {
+                                // update defect id for new comments
+                                comment.defect_id = defect_id;
+                                DefectsService.create_comment(comment).then(function(res) {
+                                    if (comments[comments.length - 1] === comment) {
+                                        def.resolve();
+                                    }
+                                })
+                            })
+                        }
+
+                        function syncDefects(defects, def) {
+                            var changed = localStorage.getObject('changedDefects') || [];
+                            angular.forEach(defects, function(defect) {
+                                var draw = defect.draw;
+                                DefectsService.create(defect.completeInfo).then(function(res) {
+                                    // update defect id for new markers
+                                    $filter('filter')(draw.markers, {
+                                        defect_id: defect.id
+                                    })[0].defect_id = res;
+                                    DrawingsService.update(draw).then(function(drawingupdate) {
+                                        if (defects[defects.length - 1].id == defect.id) {
+                                            if (defect.comments.length == 0)
+                                                def.resolve();
+                                            addComments(defect.comments, res, def);
+                                            localStorage.setObject('defectsToAdd', []);
+                                        }
+                                    });
+
+                                    changed.push({
+                                        old: defect.id,
+                                        new: res
+                                    })
+                                    if (defects[defects.length - 1].id == defect.id)
+                                        localStorage.setObject('changedDefects', changed);
+                                    updateRelatedDefectsId(localStorage.getObject('defectsToUpd'));
+                                })
+                            })
+                        }
+
+                        function updateDefects(defects) {
+                            angular.forEach(defects, function(defect) {
+                                DefectsService.update(defect).then(function(res) {
+                                    if (defects[defects.length - 1].id === defect.id) {
+                                        localStorage.setObject('defectsToUpd', []);
+                                    }
+                                })
+                            })
+                        }
+
+                        function updateDrawings(drawings) {
+                            angular.forEach(drawings, function(draw) {
+                                DrawingsService.update(draw).then(function(result) {
+                                    if (drawings[drawings.length - 1] === draw)
+                                        localStorage.setObject('drawingsToUpd', []);
+                                })
+                            })
+                        }
+
+                        function updateRelatedDefectsId(defects) {
+                            angular.forEach(defects, function(defect) {
+                                if (defect.related_tasks.length != 0 && localStorage.getObject('changedDefects').length != 0) {
+                                    for (var i = 0; i < defect.related_tasks.length; i++) {
+                                        for (var j = 0; j < localStorage.getObject('changedDefects').length; j++) {
+                                            if (defect.related_tasks[i].id == localStorage.getObject('changedDefects')[j].old) {
+                                                defect.related_tasks[i].id = localStorage.getObject('changedDefects')[j].new;
+                                                j = localStorage.getObject('changedDefects').length;
+                                                i = defect.related_tasks.length;
+                                            }
+                                        }
+                                    }
+                                }
+                            })
+                            localStorage.setObject('changedDefects', []);
+                            updateDefects(defects);
                         }
 
                         function syncData() {
@@ -105,47 +177,18 @@ angular.module($APP.name).factory('SyncService', [
                                     if (projects.length != 0) {
                                         angular.forEach(projects, function(project) {
                                             if (project.isModified) {
-                                                updateDrawings(project);
+                                                storeUpdatedDrawings(project.drawings);
                                                 storeNewDefects(project);
-                                                storeNewSubcontractors(project);
+                                                syncSubcontractors(project);
                                                 delete project.isModified;
                                             }
                                         })
-                                        angular.forEach(localStorage.getObject('commentsToAdd'), function(comment) {
-                                            DefectsService.create_comment(comment).then(function(res) {
-                                                localStorage.setObject('commentsToAdd', []);
-                                            })
-                                        })
-                                        // TODO:
-                                        // angular.forEach(localStorage.getObject('attachToAdd'), function(attach) {
-                                        // DefectsService.create_photos(attach);
-                                        // localStorage.setObject('attachToAdd', []);
-                                        // })
+                                        syncComments(localStorage.getObject('commentsToAdd'));
                                         if (localStorage.getObject('defectsToAdd') == null || localStorage.getObject('defectsToAdd').length == 0) {
                                             def.resolve();
                                         }
-
-                                        angular.forEach(localStorage.getObject('defectsToAdd'), function(defect) {
-                                            var draw = defect.draw;
-                                            DefectsService.create(defect.completeInfo).then(function(res) {
-                                                DrawingsService.update(draw).then(function(drawingupdate) {
-                                                    if (localStorage.getObject('defectsToAdd')[localStorage.getObject('defectsToAdd').length - 1].id == defect.id)
-                                                        def.resolve();
-                                                    localStorage.setObject('defectsToAdd', []);
-                                                });
-                                            })
-                                        })
-                                        angular.forEach(localStorage.getObject('defectsToUpd'), function(defect) {
-                                            DefectsService.update(defect).then(function(res) {
-                                                localStorage.setObject('defectsToUpd', []);
-                                            })
-                                        })
-
-                                        angular.forEach(localStorage.getObject('drawingsToUpd'), function(draw) {
-                                            DrawingsService.update(draw).then(function(result) {
-                                                localStorage.setObject('drawingsToUpd', []);
-                                            })
-                                        })
+                                        syncDefects(localStorage.getObject('defectsToAdd'), def);
+                                        updateDrawings(localStorage.getObject('drawingsToUpd'));
                                     } else {
                                         def.resolve();
                                     }
@@ -308,8 +351,8 @@ angular.module($APP.name).factory('SyncService', [
                                         store.insert(project).then(function(e) {
                                             if (projects[projects.length - 1] === project) {
                                                 syncPopup.close();
-                                                $state.go('app.projects');
                                                 deferred.resolve('sync_done');
+                                                $state.go('app.projects');
                                             }
                                         });
                                     })
@@ -328,7 +371,7 @@ angular.module($APP.name).factory('SyncService', [
                                         type: 'button-positive',
                                         onTap: function(e) {
                                             downloadPopup.close();
-                                            //TODO: allow clicks
+                                            location.reload();
                                         }
                                     }]
                                 });

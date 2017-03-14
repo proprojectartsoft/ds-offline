@@ -32,8 +32,8 @@ angular.module($APP.name).controller('_DefectAttachmentsCtrl', [
                 $scope.local.loaded = true;
                 $scope.local.list = [];
                 angular.forEach(defect.attachements, function(value) {
-                    value.url = $APP.server + 'pub/defectPhotos/' + value.base_64_string //TODO: download if possible and store the correct url
-                    $scope.local.list.push(value)
+                    value.url = $APP.server + 'pub/defectPhotos/' + value.base_64_string;
+                    $scope.local.list.push(value);
                 });
                 $timeout(function() {
                     $('.ds-attachments').find('img').each(function() {
