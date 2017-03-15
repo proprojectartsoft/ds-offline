@@ -18,6 +18,13 @@ angular.module($APP.name).controller('TabCtrl', [
         $scope.local.inviteemail = '';
         localStorage.removeItem('ds.defect.back');
 
+        $rootScope.$on('$stateChangeStart',
+            function(event, toState, toParams, fromState, fromParams) {
+                if (toState.name == 'app.tab') {
+                    $scope.reload();
+                }
+            })
+
         $scope.$watch(function() {
             return localStorage.getItem('dsproject')
         }, function(value) {
@@ -50,7 +57,6 @@ angular.module($APP.name).controller('TabCtrl', [
             SettingsService.set_settings($scope.settings)
             $scope.reload();
         }
-
 
         $scope.reload = function() {
             $scope.settings.loaded = false;

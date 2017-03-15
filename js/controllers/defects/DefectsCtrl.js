@@ -271,6 +271,7 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         }
                     }
                     saveChanges(project);
+                    localStorage.setObject('dsdrwact', draw);
                     localStorage.setObject('ds.defect.active.data', $scope.local.data)
                     localStorage.removeItem('ds.defect.backup')
                     localStorage.setObject('ds.reloadevent', {

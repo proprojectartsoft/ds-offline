@@ -21,7 +21,6 @@ angular.module($APP.name).controller('_SubcontractorsRelatedCtrl', [
         $scope.local.entityId = $stateParams.id;
         $scope.local.loaded = false;
         $scope.settings.subHeader = 'Subcontractor - ' + $scope.local.data.last_name + ' ' + $scope.local.data.first_name;
-
         $indexedDB.openStore('projects', function(store) {
             store.find(localStorage.getObject('dsproject').id).then(function(res) {
                 var subcontr = $filter('filter')(res.subcontractors, {

@@ -46,7 +46,7 @@ angular.module($APP.name).factory('DownloadsService', [
                                 })
                             },
                             false);
-                    } 
+                    }
                 }).then(function(success) {
                     return def.promise;
                 })

@@ -32,7 +32,6 @@ angular.module($APP.name).controller('DrawingsCtrl', [
         var width = $("#canvasCointainer").width();
         var perc = width / 12;
 
-
         var setPdf = function(url) {
             PDFJS.getDocument(url).then(function(pdf) {
                 pdf.getPage(1).then(function(page) {
@@ -148,7 +147,6 @@ angular.module($APP.name).controller('DrawingsCtrl', [
                     })
             })
         }
-
         $scope.back = function() {
             localStorage.removeItem('dsdrwact');
             localStorage.removeItem('ds.drawing.backup');

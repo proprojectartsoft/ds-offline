@@ -74,7 +74,6 @@ angular.module($APP.name).factory('SyncService', [
                         }
 
                         function syncSubcontractors(project) {
-                            // var related = localStorage.getObject('defectsToUpd') || [];
                             angular.forEach(project.subcontractors, function(subcontr) {
                                 if (typeof subcontr.isModified != 'undefined') {
                                     SubcontractorsService.update(subcontr).then(function(result) {
@@ -88,6 +87,8 @@ angular.module($APP.name).factory('SyncService', [
                             angular.forEach(comments, function(comment) {
                                 DefectsService.create_comment(comment).then(function(res) {
                                     localStorage.setObject('commentsToAdd', []);
+                                }, function(err) {
+                                    localStorage.setObject('commentsToAdd', []);
                                 })
                             })
                         }
@@ -100,6 +101,8 @@ angular.module($APP.name).factory('SyncService', [
                                     if (comments[comments.length - 1] === comment) {
                                         def.resolve();
                                     }
+                                }, function(err) {
+                                    def.resolve(); //TODO: error message could not add comment
                                 })
                             })
                         }
@@ -120,6 +123,8 @@ angular.module($APP.name).factory('SyncService', [
                                             addComments(defect.comments, res, def);
                                             localStorage.setObject('defectsToAdd', []);
                                         }
+                                    }, function(err) {
+                                        localStorage.setObject('defectsToAdd', []);
                                     });
 
                                     changed.push({
@@ -129,6 +134,8 @@ angular.module($APP.name).factory('SyncService', [
                                     if (defects[defects.length - 1].id == defect.id)
                                         localStorage.setObject('changedDefects', changed);
                                     updateRelatedDefectsId(localStorage.getObject('defectsToUpd'));
+                                }, function(err) {
+                                    def.resolve(); //TODO: message: could not create defect
                                 })
                             })
                         }
@@ -139,6 +146,8 @@ angular.module($APP.name).factory('SyncService', [
                                     if (defects[defects.length - 1].id === defect.id) {
                                         localStorage.setObject('defectsToUpd', []);
                                     }
+                                }, function(err) {
+                                    localStorage.setObject('defectsToUpd', []);
                                 })
                             })
                         }
@@ -148,6 +157,8 @@ angular.module($APP.name).factory('SyncService', [
                                 DrawingsService.update(draw).then(function(result) {
                                     if (drawings[drawings.length - 1] === draw)
                                         localStorage.setObject('drawingsToUpd', []);
+                                }, function(err) {
+                                    localStorage.setObject('drawingsToUpd', []);
                                 })
                             })
                         }
@@ -392,9 +403,6 @@ angular.module($APP.name).factory('SyncService', [
                                 }
                             }]
                         });
-                        // if (savedCredentials) {
-                        //     $state.go('login');
-                        // }
                     }
                     return deferred.promise;
                 })
