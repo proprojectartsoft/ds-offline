@@ -91,7 +91,7 @@ angular.module($APP.name).factory('SyncService', [
                         }
 
                         function addComments(comments, defect_id, defer, doDefer) {
-                            if (comments.length != 0 && doDefer) {
+                            if (comments.length == 0 && doDefer) {
                                 localStorage.setObject('defectsToAdd', []);
                                 commOk = true;
                                 defer.resolve();
@@ -233,9 +233,9 @@ angular.module($APP.name).factory('SyncService', [
                                         updateDrawings(localStorage.getObject('drawingsToUpd'));
                                         syncDefects(localStorage.getObject('defectsToAdd')).then(function(res) {
                                             updateDefects(localStorage.getObject('defectsToUpd'));
-
+                                            def.resolve();
                                         })
-                                        def.resolve();
+                                        // def.resolve();
                                     } else {
                                         def.resolve();
                                     }
