@@ -257,8 +257,10 @@ angular.module($APP.name).controller('DefectsCtrl', [
                         var newSubcontr = $filter('filter')(project.subcontractors, {
                             id: defect.completeInfo.assignee_id
                         })[0];
-                        newSubcontr.related.push(defect.completeInfo);
-                        ConvertersService.increase_nr_tasks(newSubcontr, defect.status_name);
+                        if (newSubcontr) {
+                            newSubcontr.related.push(defect.completeInfo);
+                            ConvertersService.increase_nr_tasks(newSubcontr, defect.status_name);
+                        }
                     } else {
                         var subcontr = $filter('filter')(project.subcontractors, {
                             id: defect.completeInfo.assignee_id
