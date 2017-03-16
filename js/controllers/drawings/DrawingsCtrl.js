@@ -147,6 +147,7 @@ angular.module($APP.name).controller('DrawingsCtrl', [
                     })
             })
         }
+
         $scope.back = function() {
             localStorage.removeItem('dsdrwact');
             localStorage.removeItem('ds.drawing.backup');
