@@ -20,9 +20,6 @@ angular.module($APP.name).factory('SyncService', [
                 $timeout(function() {
                     var deferred = $q.defer();
                     var failed = false;
-                    var drawOk = false;
-                    var commOk = false;
-                    var defOk = false;
 
                     if (typeof navigator.connection == 'undefined' || (navigator.connection.type != Connection.NONE && navigator.connection.type != Connection.UNKNOWN)) {
                         var syncPopup = $ionicPopup.alert({
@@ -83,9 +80,13 @@ angular.module($APP.name).factory('SyncService', [
                         function syncComments(comments) {
                             angular.forEach(comments, function(comment) {
                                 DefectsService.create_comment(comment).then(function(res) {
-                                    localStorage.setObject('commentsToAdd', []);
+                                    if (comments[comments.length - 1] === comment) {
+                                        localStorage.setObject('commentsToAdd', []);
+                                    }
                                 }, function(err) {
-                                    localStorage.setObject('commentsToAdd', []);
+                                    if (comments[comments.length - 1] === comment) {
+                                        localStorage.setObject('commentsToAdd', []);
+                                    }
                                 })
                             })
                         }
@@ -93,8 +94,6 @@ angular.module($APP.name).factory('SyncService', [
                         function addComments(comments, defect_id, defer, doDefer) {
                             if (comments.length == 0 && doDefer) {
                                 localStorage.setObject('defectsToAdd', []);
-                                commOk = true;
-                                defer.resolve();
                             }
                             angular.forEach(comments, function(comment) {
                                 // update defect id for new comments
@@ -102,15 +101,11 @@ angular.module($APP.name).factory('SyncService', [
                                 DefectsService.create_comment(comment).then(function(res) {
                                     if (comments[comments.length - 1] === comment && doDefer) {
                                         localStorage.setObject('defectsToAdd', []);
-                                        commOk = true;
-                                        console.log("is true");
                                         defer.resolve();
                                     }
                                 }, function(err) {
                                     if (comments[comments.length - 1].id == comment.id && doDefer) {
                                         localStorage.setObject('defectsToAdd', []);
-                                        commOk = true;
-                                        console.log("is true");
                                         defer.resolve();
                                     }
                                 })
@@ -156,19 +151,13 @@ angular.module($APP.name).factory('SyncService', [
                         }
 
                         function updateDrawings(drawings) {
-                            if (drawings.length == 0)
-                                drawOk = true;
                             angular.forEach(drawings, function(draw) {
                                 DrawingsService.update(draw).then(function(result) {
                                     if (drawings[drawings.length - 1] === draw) {
                                         localStorage.setObject('drawingsToUpd', []);
-                                        drawOk = true;
-                                        console.log("is true");
                                     }
                                 }, function(err) {
                                     if (drawings[drawings.length - 1] === draw) {
-                                        drawOk = true;
-                                        console.log("is true");
                                         localStorage.setObject('drawingsToUpd', []);
                                     }
                                 })
@@ -176,19 +165,14 @@ angular.module($APP.name).factory('SyncService', [
                         }
 
                         function updateDefects(defects) {
-                            if (defects.length == 0)
-                                defOk = true;
                             updateRelatedDefectsId(defects);
                             angular.forEach(defects, function(defect) {
                                 DefectsService.update(defect).then(function(res) {
                                     if (defects[defects.length - 1].id === defect.id) {
-                                        console.log("is true");
                                         localStorage.setObject('defectsToUpd', []);
                                     }
                                 }, function(err) {
                                     if (defects[defects.length - 1].id === defect.id) {
-                                        defOk = true;
-                                        console.log("is true");
                                         localStorage.setObject('defectsToUpd', []);
                                     }
                                 })
@@ -229,13 +213,13 @@ angular.module($APP.name).factory('SyncService', [
                                                 delete project.isModified;
                                             }
                                         })
+
                                         syncComments(localStorage.getObject('commentsToAdd'));
                                         updateDrawings(localStorage.getObject('drawingsToUpd'));
                                         syncDefects(localStorage.getObject('defectsToAdd')).then(function(res) {
                                             updateDefects(localStorage.getObject('defectsToUpd'));
                                             def.resolve();
                                         })
-                                        // def.resolve();
                                     } else {
                                         def.resolve();
                                     }
